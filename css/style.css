@@ -77,6 +77,12 @@ html, body {
   user-select: none;
 }
 
+/* Prevent 300ms tap delay in PWA standalone */
+a, button, [onclick], .nav-item, .quick-entry-item, .learning-subject-tab,
+.mobile-nav-item, .calendar-day, .todo-checkbox {
+  touch-action: manipulation;
+}
+
 /* Healing gradient background — warm peachy + lavender */
 body::before {
   content: '';
@@ -91,10 +97,19 @@ body::before {
   z-index: 0;
 }
 
+/* --- Safe Area Support (PWA standalone) --- */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
 /* --- App Layout --- */
 .app-container {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   position: relative;
   z-index: 1;
 }
@@ -110,6 +125,7 @@ body::before {
   display: flex;
   flex-direction: column;
   padding: 24px 14px;
+  padding-top: calc(24px + var(--safe-top));
   z-index: 10;
   transition: transform var(--transition-smooth);
 }
@@ -196,7 +212,9 @@ body::before {
 /* Top bar */
 .top-bar {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 16px 28px; flex-shrink: 0;
+  padding: 16px 28px;
+  padding-top: calc(16px + var(--safe-top));
+  flex-shrink: 0;
   background: rgba(255, 255, 255, 0.42);
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
@@ -933,9 +951,18 @@ select.input {
   /* ---- Top bar ---- */
   .top-bar {
     padding: 10px 14px;
+    padding-top: calc(10px + var(--safe-top));
     gap: 10px;
   }
   .top-bar-title { font-size: 17px; }
+
+  /* ---- Sidebar mobile ---- */
+  .sidebar {
+    padding-top: calc(16px + var(--safe-top));
+  }
+  .sidebar-overlay {
+    padding-top: var(--safe-top);
+  }
 
   /* ---- Content area ---- */
   .content-scroll {
@@ -1277,6 +1304,7 @@ select.input {
   }
   .top-bar {
     padding: 9px 10px;
+    padding-top: calc(9px + var(--safe-top));
   }
   .top-bar-title { font-size: 16px; }
 
