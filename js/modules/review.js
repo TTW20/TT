@@ -45,45 +45,29 @@ const ReviewModule = {
     const todayWorkouts = exerciseData.records.filter(r => r.date === App.today() && r.type === 'workout');
     const exerciseMinutes = todayWorkouts.reduce((sum, r) => sum + (r.duration || 0), 0);
 
-    // Generate stats cards
+    // Calculate self-investment time
+    const selfInvest = pomodoroToday + exerciseMinutes + (totalReadPages > 0 ? 30 : 0);
+
+    // Uniform card template: all cards have same internal structure for equal height
+    const cardTpl = (value, label, sub, color, barPct) => `
+      <div class="glass-card review-stat-card" style="text-align:center;padding:20px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:130px">
+        <div style="font-size:30px;font-weight:200;color:${color};line-height:1">${value}</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:8px">${label}</div>
+        <div style="margin-top:10px;width:100%;height:5px;border-radius:3px;background:rgba(0,0,0,0.05);overflow:hidden">
+          <div style="height:100%;width:${barPct}%;background:${color};border-radius:3px;transition:width 0.8s cubic-bezier(0.4,0,0.2,1)"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">${sub}</div>
+      </div>
+    `;
+
     document.getElementById('reviewStatsBoard').innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
-        <div class="glass-card flat" style="text-align:center;padding:18px">
-          <div style="font-size:32px;font-weight:200;color:var(--accent-blue)">${todoPct}%</div>
-          <div style="font-size:13px;color:var(--text-secondary);margin-top:4px">待办完成率</div>
-          <div style="margin-top:8px;height:6px;border-radius:3px;background:rgba(0,0,0,0.06);overflow:hidden">
-            <div style="height:100%;width:${todoPct}%;background:var(--accent-blue);border-radius:3px;transition:width 0.6s"></div>
-          </div>
-          <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">${todoCompleted}/${todoTotal} 项已完成</div>
-        </div>
-        <div class="glass-card flat" style="text-align:center;padding:18px">
-          <div style="font-size:32px;font-weight:200;color:var(--accent-cyan)">${waterPct}%</div>
-          <div style="font-size:13px;color:var(--text-secondary);margin-top:4px">饮水完成度</div>
-          <div style="margin-top:8px;height:6px;border-radius:3px;background:rgba(0,0,0,0.06);overflow:hidden">
-            <div style="height:100%;width:${waterPct}%;background:var(--accent-cyan);border-radius:3px;transition:width 0.6s"></div>
-          </div>
-          <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">${waterCurrent}/${waterGoal}ml</div>
-        </div>
-        <div class="glass-card flat" style="text-align:center;padding:18px">
-          <div style="font-size:32px;font-weight:200;color:var(--accent-green)">${exerciseMinutes}</div>
-          <div style="font-size:13px;color:var(--text-secondary);margin-top:4px">运动时长</div>
-          <div style="font-size:11px;color:var(--text-tertiary);margin-top:12px">单位：分钟</div>
-        </div>
-        <div class="glass-card flat" style="text-align:center;padding:18px">
-          <div style="font-size:32px;font-weight:200;color:var(--accent-purple)">${totalReadPages}</div>
-          <div style="font-size:13px;color:var(--text-secondary);margin-top:4px">累计阅读页数</div>
-          <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px">${books.reading.length} 本书在读</div>
-        </div>
-        <div class="glass-card flat" style="text-align:center;padding:18px">
-          <div style="font-size:32px;font-weight:200;color:var(--accent-orange)">${pomodoroToday}</div>
-          <div style="font-size:13px;color:var(--text-secondary);margin-top:4px">番茄专注时长</div>
-          <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px">单位：分钟</div>
-        </div>
-        <div class="glass-card flat" style="text-align:center;padding:18px">
-          <div style="font-size:32px;font-weight:200;color:var(--accent-pink)">${pomodoroToday + exerciseMinutes + (totalReadPages > 0 ? 30 : 0)}</div>
-          <div style="font-size:13px;color:var(--text-secondary);margin-top:4px">今日自我投资</div>
-          <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px">学习+运动+阅读</div>
-        </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+        ${cardTpl(`${todoPct}%`, '待办完成率', `${todoCompleted}/${todoTotal} 项已完成`, 'var(--accent-blue)', todoPct)}
+        ${cardTpl(`${waterPct}%`, '饮水完成度', `${waterCurrent}/${waterGoal}ml`, 'var(--accent-cyan)', waterPct)}
+        ${cardTpl(`${exerciseMinutes}`, '运动时长', '单位：分钟', 'var(--accent-green)', Math.min(100, exerciseMinutes))}
+        ${cardTpl(`${totalReadPages}`, '累计阅读页数', `${books.reading.length} 本书在读`, 'var(--accent-purple)', Math.min(100, totalReadPages))}
+        ${cardTpl(`${pomodoroToday}`, '番茄专注时长', '单位：分钟', 'var(--accent-orange)', Math.min(100, pomodoroToday))}
+        ${cardTpl(`${selfInvest}`, '今日自我投资', '学习+运动+阅读', 'var(--accent-pink)', Math.min(100, selfInvest))}
       </div>
     `;
 

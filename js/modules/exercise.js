@@ -3,6 +3,10 @@
  * Weight tracking + workout log + motivational quotes
  */
 const ExerciseModule = {
+  workoutTimerRunning: false,
+  workoutTimerSeconds: 0,
+  workoutTimerInterval: null,
+
   init() {
     this.refresh();
   },
@@ -11,6 +15,89 @@ const ExerciseModule = {
     this.renderMotivation();
     this.renderWeightChart();
     this.renderRecords();
+    this.updateTimerDisplay();
+  },
+
+  // ===== Workout Timer =====
+  toggleTimer() {
+    if (this.workoutTimerRunning) {
+      this.stopTimer();
+    } else {
+      this.startTimer();
+    }
+  },
+
+  startTimer() {
+    this.workoutTimerRunning = true;
+    this.workoutTimerInterval = setInterval(() => {
+      this.workoutTimerSeconds++;
+      this.updateTimerDisplay();
+    }, 1000);
+
+    const btn = document.getElementById('workoutTimerBtn');
+    const saveBtn = document.getElementById('workoutSaveBtn');
+    const status = document.getElementById('workoutTimerStatus');
+    if (btn) { btn.textContent = '⏹ 结束运动'; btn.className = 'btn btn-danger'; }
+    if (saveBtn) saveBtn.style.display = '';
+    if (status) status.textContent = '🔥 运动中...加油！';
+    this.updateTimerDisplay();
+  },
+
+  stopTimer() {
+    this.workoutTimerRunning = false;
+    clearInterval(this.workoutTimerInterval);
+
+    const btn = document.getElementById('workoutTimerBtn');
+    const status = document.getElementById('workoutTimerStatus');
+    if (btn) { btn.textContent = '▶ 开始运动'; btn.className = 'btn btn-primary'; }
+    if (status) {
+      const mins = Math.round(this.workoutTimerSeconds / 60);
+      status.textContent = `运动结束 · 共 ${mins} 分钟 🎉`;
+    }
+    this.updateTimerDisplay();
+  },
+
+  saveTimerRecord() {
+    const mins = Math.round(this.workoutTimerSeconds / 60);
+    if (mins < 1) { App.toast('运动不足1分钟，再坚持一下吧~'); return; }
+
+    const typeEl = document.getElementById('workoutType');
+    const workoutType = typeEl ? typeEl.value.replace(/^[^\s]+\s/, '') : '其他';
+
+    const data = Storage.getExercise();
+    data.records.push({
+      date: App.today(),
+      type: 'workout',
+      workoutType,
+      duration: mins,
+      source: 'timer',
+    });
+    Storage.saveExercise(data);
+
+    // Reset timer
+    this.workoutTimerSeconds = 0;
+    this.workoutTimerRunning = false;
+    clearInterval(this.workoutTimerInterval);
+
+    const btn = document.getElementById('workoutTimerBtn');
+    const saveBtn = document.getElementById('workoutSaveBtn');
+    const status = document.getElementById('workoutTimerStatus');
+    if (btn) { btn.textContent = '▶ 开始运动'; btn.className = 'btn btn-primary'; }
+    if (saveBtn) saveBtn.style.display = 'none';
+    if (status) status.textContent = '准备开始运动';
+
+    this.updateTimerDisplay();
+    this.renderRecords();
+    App.toast(`🏃 ${workoutType} ${mins}分钟已记录！`);
+  },
+
+  updateTimerDisplay() {
+    const display = document.getElementById('workoutTimerDisplay');
+    if (display) {
+      const mins = Math.floor(this.workoutTimerSeconds / 60);
+      const secs = this.workoutTimerSeconds % 60;
+      display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
   },
 
   renderMotivation() {
@@ -72,7 +159,9 @@ const ExerciseModule = {
   addWorkout() {
     const typeEl = document.getElementById('workoutType');
     const durationEl = document.getElementById('workoutDuration');
-    const type = typeEl.value;
+    // Strip emoji prefix if present (e.g. "🏃 跑步" → "跑步")
+    const rawType = typeEl ? typeEl.value : '其他';
+    const type = rawType.replace(/^[^\s]+\s/, '') || rawType;
     const duration = parseInt(durationEl.value);
 
     if (!duration || duration <= 0) { App.toast('请输入运动时长'); return; }
@@ -85,7 +174,7 @@ const ExerciseModule = {
       duration,
     });
     Storage.saveExercise(data);
-    durationEl.value = '';
+    if (durationEl) durationEl.value = '';
     this.refresh();
     App.toast(`🏃 ${type} ${duration}分钟 已记录`);
   },

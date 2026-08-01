@@ -525,24 +525,36 @@
             </div>
           </div>
 
-          <!-- Workout Log -->
+          <!-- Workout Timer + Log -->
           <div>
-            <div class="glass-card mb-md">
-              <div class="section-title">🏃 运动打卡</div>
-              <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
-                <div style="flex:1;min-width:100px">
-                  <label style="font-size:11px;color:var(--text-tertiary)">运动类型</label>
-                  <select class="input" id="workoutType">
-                    <option>跑步</option><option>跳绳</option><option>瑜伽</option>
-                    <option>游泳</option><option>骑行</option><option>力量训练</option>
-                    <option>散步</option><option>篮球</option><option>羽毛球</option><option>其他</option>
-                  </select>
-                </div>
-                <div style="flex:1;min-width:80px">
-                  <label style="font-size:11px;color:var(--text-tertiary)">时长 (分钟)</label>
-                  <input type="number" class="input" id="workoutDuration" placeholder="分钟" min="1" onkeydown="if(event.key==='Enter')ExerciseModule.addWorkout()">
-                </div>
-                <button class="btn btn-sm btn-primary" onclick="ExerciseModule.addWorkout()" style="flex-shrink:0">打卡</button>
+            <!-- Timer Card -->
+            <div class="glass-card mb-md" style="text-align:center">
+              <div class="section-title" style="justify-content:center">⏱ 运动计时器</div>
+              <div style="font-size:56px;font-weight:200;letter-spacing:3px;font-family:'SF Mono','Menlo',monospace;color:var(--accent-green);margin:8px 0" id="workoutTimerDisplay">00:00</div>
+              <div style="font-size:13px;color:var(--text-tertiary);margin-bottom:10px" id="workoutTimerStatus">准备开始运动</div>
+              <div style="display:flex;gap:8px;justify-content:center">
+                <button class="btn btn-primary" id="workoutTimerBtn" onclick="ExerciseModule.toggleTimer()" style="min-width:100px">
+                  ▶ 开始运动
+                </button>
+                <button class="btn btn-secondary btn-sm" id="workoutSaveBtn" onclick="ExerciseModule.saveTimerRecord()" style="display:none">
+                  💾 保存记录
+                </button>
+              </div>
+              <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--glass-border)">
+                <select class="input" id="workoutType" style="text-align:center">
+                  <option>🏃 跑步</option><option>🪢 跳绳</option><option>🧘 瑜伽</option>
+                  <option>🏊 游泳</option><option>🚴 骑行</option><option>🏋️ 力量训练</option>
+                  <option>🚶 散步</option><option>🏀 篮球</option><option>🏸 羽毛球</option><option>💪 其他</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Manual entry (secondary) -->
+            <div class="glass-card flat mb-md">
+              <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px">或手动输入时长</div>
+              <div style="display:flex;gap:8px;align-items:flex-end">
+                <input type="number" class="input" id="workoutDuration" placeholder="运动时长 (分钟)" min="1" style="text-align:center" onkeydown="if(event.key==='Enter')ExerciseModule.addWorkout()">
+                <button class="btn btn-sm btn-ghost" onclick="ExerciseModule.addWorkout()" style="flex-shrink:0;white-space:nowrap">手动记录</button>
               </div>
             </div>
 
