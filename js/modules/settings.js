@@ -142,13 +142,20 @@ const SettingsModule = {
                  value="${s.gistToken || ''}">
           <button class="btn btn-sm btn-secondary" onclick="SettingsModule.saveToken()" style="flex-shrink:0">💾 保存Token</button>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
           <button class="btn btn-sm btn-primary" onclick="SettingsModule.cloudUpload(this)">☁ 上传到云端</button>
           <button class="btn btn-sm btn-secondary" onclick="SettingsModule.cloudDownload(this)">⬇ 从云端加载</button>
         </div>
-        <div style="display:flex;gap:16px;align-items:center;margin-top:12px;font-size:11px;color:var(--text-tertiary)">
+        <div style="display:flex;gap:16px;align-items:center;margin-top:8px;font-size:11px;color:var(--text-tertiary)">
           <span id="syncStatus">${s.lastSync ? '上次同步: ' + new Date(s.lastSync).toLocaleString('zh-CN') : '尚未同步'}</span>
           ${s.gistId ? '<span>Gist ID: ' + s.gistId.slice(0, 8) + '...</span>' : ''}
+        </div>
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-border)">
+          <span style="font-size:11px;color:var(--text-tertiary)">无需Token的同步方式：</span>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button class="btn btn-xs btn-secondary" onclick="SettingsModule.copyToClipboard()">📋 复制数据</button>
+            <button class="btn btn-xs btn-secondary" onclick="SettingsModule.pasteFromClipboard()">📌 粘贴导入</button>
+          </div>
         </div>
       </div>
       </div>
@@ -294,6 +301,50 @@ const SettingsModule = {
     setTimeout(() => location.reload(), 1500);
   },
 
+  // ===== Clipboard Sync (no GitHub needed) =====
+  async copyToClipboard() {
+    try {
+      const dataJson = Storage.exportAll();
+      await navigator.clipboard.writeText(dataJson);
+      App.toast('📋 数据已复制！在另一台设备粘贴导入');
+    } catch {
+      // Fallback: show in a textarea for manual copy
+      const dataJson = Storage.exportAll();
+      const ta = document.createElement('textarea');
+      ta.value = dataJson;
+      ta.style.cssText = 'position:fixed;top:10%;left:5%;width:90%;height:70%;z-index:999;font-size:11px;padding:12px;border-radius:12px;border:2px solid var(--accent-blue)';
+      document.body.appendChild(ta);
+      ta.select();
+      App.toast('📋 请全选复制文本框内容');
+      ta.addEventListener('blur', () => setTimeout(() => ta.remove(), 300));
+    }
+  },
+
+  async pasteFromClipboard() {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text || !text.includes('"mt_')) {
+        App.toast('❌ 剪贴板内容不是有效的工作台数据');
+        return;
+      }
+      if (!confirm('⚠️ 从剪贴板导入将覆盖当前数据，确定继续？')) return;
+      if (Storage.importAll(text)) {
+        App.toast('📥 数据已导入！刷新页面生效');
+        setTimeout(() => location.reload(), 1000);
+      }
+    } catch {
+      // Fallback: prompt user to paste
+      const text = prompt('请粘贴工作台数据 JSON（从另一台设备复制）：');
+      if (!text) return;
+      if (Storage.importAll(text)) {
+        App.toast('📥 数据已导入！刷新页面生效');
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        App.toast('❌ 数据格式无效');
+      }
+    }
+  },
+
   // ===== Cloud Sync (GitHub Gist) =====
   saveToken() {
     const token = document.getElementById('settingGistToken').value.trim();
@@ -336,7 +387,7 @@ const SettingsModule = {
       const resp = await fetch(url, {
         method,
         headers: {
-          'Authorization': `token ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
         },
@@ -358,7 +409,12 @@ const SettingsModule = {
         '✅ 上次同步: ' + new Date().toLocaleString('zh-CN');
       App.toast('☁ 数据已上传到云端！');
     } catch (e) {
-      App.toast('❌ 上传失败: ' + e.message);
+      const msg = e.message || '网络错误';
+      if (msg.includes('401')) App.toast('❌ Token无效，请重新创建并粘贴');
+      else if (msg.includes('403')) App.toast('❌ Token缺少gist权限，创建时请勾选gist');
+      else if (msg.includes('Failed to fetch') || msg.includes('NetworkError'))
+        App.toast('❌ 网络不通，请检查手机是否联网');
+      else App.toast('❌ ' + msg);
     }
     if (btn) { btn.disabled = false; btn.textContent = '☁ 上传到云端'; }
   },
@@ -376,7 +432,7 @@ const SettingsModule = {
     try {
       const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
         headers: {
-          'Authorization': `token ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Accept': 'application/vnd.github.v3+json',
         },
       });
