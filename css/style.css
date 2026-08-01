@@ -1136,8 +1136,27 @@ select.input {
   }
 
   /* =========== EXERCISE =========== */
-  #weightChart svg { width: 100%; height: auto; }
   #exerciseMotivation { font-size: 14px; }
+  #page-exercise .two-col { grid-template-columns: 1fr !important; gap: 12px; }
+  #workoutTimerDisplay { font-size: 42px !important; margin: 4px 0 !important; }
+  #workoutTimerStatus { font-size: 12px !important; }
+  #weightChart { overflow-x: auto; }
+  #weightChart svg { width: 100% !important; height: auto !important; min-width: 300px; }
+  #exerciseTodayRecords [style*="justify-content:space-between"] { flex-wrap: wrap; gap: 4px; }
+
+  /* =========== COUNTDOWN =========== */
+  #page-countdown .countdown-card > div > div:first-child {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center;
+  }
+  .countdown-card [style*="flex:1"] { min-width: 100%; }
+
+  /* =========== SETTINGS =========== */
+  #page-settings [style*="grid-template-columns:1fr 1fr"],
+  #page-settings [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
 
   /* =========== INSPIRATION =========== */
   #inspirationFilters {
@@ -1174,6 +1193,15 @@ select.input {
   /* =========== SIDEBAR FOOTER =========== */
   .sidebar-footer { padding-top: 8px; }
   .sidebar-footer .btn { font-size: 10px; padding: 7px 12px; min-height: 34px; }
+
+  /* =========== GENERAL OVERFLOW PREVENTION =========== */
+  .content-scroll, .page, .page.active {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  img, svg, video, canvas { max-width: 100%; height: auto; }
+  pre, code, table { white-space: pre-wrap; word-break: break-all; }
+  * { -webkit-hyphens: auto; hyphens: auto; }
 
   /* =========== TOUCH TARGETS =========== */
   .btn { min-height: 38px; padding: 8px 18px; font-size: 13px; }
