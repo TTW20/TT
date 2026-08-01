@@ -249,20 +249,53 @@
         <!-- Add Form -->
         <div class="glass-card mb-md">
           <div class="section-title">🔔 新建提醒</div>
+
+          <!-- Repeat Type Toggle -->
+          <div id="reminderRepeatToggle" style="display:flex;gap:8px;margin-bottom:14px">
+            <button class="btn btn-sm btn-primary" data-type="once" onclick="RemindersModule.switchRepeatType('once')">📌 单次提醒</button>
+            <button class="btn btn-sm btn-secondary" data-type="daily" onclick="RemindersModule.switchRepeatType('daily')">🔁 每天重复</button>
+            <button class="btn btn-sm btn-secondary" data-type="weekdays" onclick="RemindersModule.switchRepeatType('weekdays')">💼 工作日</button>
+          </div>
+
           <div style="display:flex;flex-direction:column;gap:10px">
-            <input type="text" class="input" id="reminderTitle" placeholder="提醒内容，如：开会、喝水、取快递">
+            <!-- Common fields -->
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <input type="date" class="input" id="reminderDate" style="flex:1;min-width:120px">
-              <input type="time" class="input" id="reminderTime" style="flex:1;min-width:110px" value="09:00">
+              <input type="text" class="input" id="reminderTitle" placeholder="提醒内容，如：吃药、喝水、开会" style="flex:2;min-width:160px">
               <input type="text" class="input" id="reminderNote" placeholder="备注 (可选)" style="flex:2;min-width:140px">
             </div>
+
+            <!-- Single reminder fields -->
+            <div id="reminderOnceFields" style="display:flex;gap:10px;flex-wrap:wrap">
+              <input type="date" class="input" id="reminderDate" style="flex:1;min-width:120px">
+              <input type="time" class="input" id="reminderTime" style="flex:1;min-width:110px" value="09:00">
+            </div>
+
+            <!-- Repeat reminder fields -->
+            <div id="reminderRepeatFields" style="display:none">
+              <div style="margin-bottom:8px">
+                <label style="font-size:12px;color:var(--text-secondary)">⏰ 提醒时间 (多个用逗号分隔)</label>
+                <input type="text" class="input" id="reminderTimes" placeholder="如：08:00, 12:30, 18:00" style="font-family:monospace">
+                <div style="font-size:10px;color:var(--text-tertiary);margin-top:4px">
+                  格式 HH:MM，多个用英文逗号分隔。每天在这些时间点提醒
+                </div>
+              </div>
+              <div>
+                <label style="font-size:12px;color:var(--text-secondary)">📅 截止日期 (可选，不填则无限期)</label>
+                <input type="date" class="input" id="reminderEndDate" style="max-width:200px">
+              </div>
+            </div>
+
+            <!-- Action row -->
             <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap">
-              <div style="display:flex;gap:6px;flex-wrap:wrap">
-                <span style="font-size:11px;color:var(--text-tertiary)">快速设置：</span>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                <span style="font-size:11px;color:var(--text-tertiary)">预设：</span>
+                <button class="btn btn-xs btn-primary" onclick="RemindersModule.quickPreset('pill')">💊 吃药</button>
+                <button class="btn btn-xs btn-secondary" onclick="RemindersModule.quickPreset('water')">💧 喝水</button>
+                <button class="btn btn-xs btn-secondary" onclick="RemindersModule.quickPreset('sleep')">😴 睡觉</button>
+                <span style="color:var(--glass-border);margin:0 2px">|</span>
                 <button class="btn btn-xs btn-secondary" onclick="RemindersModule.quickAdd(5)">5分钟后</button>
                 <button class="btn btn-xs btn-secondary" onclick="RemindersModule.quickAdd(15)">15分钟后</button>
                 <button class="btn btn-xs btn-secondary" onclick="RemindersModule.quickAdd(30)">30分钟后</button>
-                <button class="btn btn-xs btn-secondary" onclick="RemindersModule.quickAdd(60)">1小时后</button>
               </div>
               <button class="btn btn-primary btn-sm" onclick="RemindersModule.addReminder()">🔔 设置提醒</button>
             </div>
@@ -272,7 +305,7 @@
         <!-- List header -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
           <div class="section-title" style="margin-bottom:0">📋 提醒列表</div>
-          <button class="btn btn-xs btn-ghost" onclick="RemindersModule.clearTriggered()">清除已完成</button>
+          <button class="btn btn-xs btn-ghost" onclick="RemindersModule.clearExpired()">清除已过期</button>
         </div>
 
         <!-- Reminder Cards -->
