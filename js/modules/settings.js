@@ -121,16 +121,35 @@ const SettingsModule = {
         <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px">选择你喜欢的主题强调色，全局生效</div>
       </div>
 
+      <!-- Cloud Sync -->
+      <div class="glass-card mb-md">
+        <div class="section-title">☁ 云同步 · GitHub Gist</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6">
+          将数据同步到 GitHub 私有 Gist，电脑和手机之间自动同步。<br>
+          <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--accent-blue)">→ 点此创建 Token</a>，勾选 <b>gist</b> 权限，生成后粘贴到下方。
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px">
+          <input type="password" class="input" id="settingGistToken" placeholder="GitHub Personal Access Token" style="flex:2;min-width:200px;font-family:monospace;font-size:12px"
+                 value="${s.gistToken || ''}">
+          <button class="btn btn-sm btn-secondary" onclick="SettingsModule.saveToken()" style="flex-shrink:0">💾 保存Token</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-primary" onclick="SettingsModule.cloudUpload(this)">☁ 上传到云端</button>
+          <button class="btn btn-sm btn-secondary" onclick="SettingsModule.cloudDownload(this)">⬇ 从云端加载</button>
+        </div>
+        <div style="display:flex;gap:16px;align-items:center;margin-top:12px;font-size:11px;color:var(--text-tertiary)">
+          <span id="syncStatus">${s.lastSync ? '上次同步: ' + new Date(s.lastSync).toLocaleString('zh-CN') : '尚未同步'}</span>
+          ${s.gistId ? '<span>Gist ID: ' + s.gistId.slice(0, 8) + '...</span>' : ''}
+        </div>
+      </div>
+
       <!-- Data Management -->
       <div class="glass-card mb-md">
-        <div class="section-title">💾 数据管理</div>
+        <div class="section-title">💾 本地数据</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn btn-secondary btn-sm" onclick="SettingsModule.exportData()">📤 导出全部数据</button>
-          <button class="btn btn-secondary btn-sm" onclick="SettingsModule.importData()">📥 导入数据</button>
-          <button class="btn btn-danger btn-sm" onclick="SettingsModule.resetAll()">🗑 重置所有数据</button>
-        </div>
-        <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px">
-          数据存储在浏览器本地。导出为 JSON 文件可跨设备迁移。重置将清除所有数据，不可恢复。
+          <button class="btn btn-secondary btn-sm" onclick="SettingsModule.exportData()">📤 导出JSON</button>
+          <button class="btn btn-secondary btn-sm" onclick="SettingsModule.importData()">📥 导入JSON</button>
+          <button class="btn btn-danger btn-sm" onclick="SettingsModule.resetAll()">🗑 重置数据</button>
         </div>
       </div>
 
@@ -273,5 +292,119 @@ const SettingsModule = {
     });
     App.toast('🗑 所有数据已清除，页面即将刷新');
     setTimeout(() => location.reload(), 1500);
+  },
+
+  // ===== Cloud Sync (GitHub Gist) =====
+  saveToken() {
+    const token = document.getElementById('settingGistToken').value.trim();
+    if (!token) { App.toast('请输入 GitHub Token'); return; }
+    this.saveSettings({ gistToken: token });
+    App.toast('🔑 Token已保存');
+  },
+
+  getToken() {
+    const s = this.getSettings();
+    return s.gistToken || '';
+  },
+
+  async cloudUpload(btn) {
+    const token = this.getToken();
+    if (!token) { App.toast('⚠️ 请先填写 GitHub Token'); return; }
+
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ 上传中...'; }
+
+    try {
+      const dataJson = Storage.exportAll();
+      const s = this.getSettings();
+      const gistId = s.gistId;
+
+      const body = {
+        description: '梦天工作台 · 数据备份',
+        public: false,
+        files: {
+          'mengtian-data.json': { content: dataJson },
+        },
+      };
+
+      let url = 'https://api.github.com/gists';
+      let method = 'POST';
+      if (gistId) {
+        url = `https://api.github.com/gists/${gistId}`;
+        method = 'PATCH';
+      }
+
+      const resp = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.message || `HTTP ${resp.status}`);
+      }
+
+      const result = await resp.json();
+      this.saveSettings({
+        gistId: result.id,
+        lastSync: new Date().toISOString(),
+      });
+
+      document.getElementById('syncStatus').textContent =
+        '✅ 上次同步: ' + new Date().toLocaleString('zh-CN');
+      App.toast('☁ 数据已上传到云端！');
+    } catch (e) {
+      App.toast('❌ 上传失败: ' + e.message);
+    }
+    if (btn) { btn.disabled = false; btn.textContent = '☁ 上传到云端'; }
+  },
+
+  async cloudDownload(btn) {
+    const token = this.getToken();
+    if (!token) { App.toast('⚠️ 请先填写 GitHub Token'); return; }
+
+    const s = this.getSettings();
+    const gistId = s.gistId;
+    if (!gistId) { App.toast('⚠️ 请先上传一次数据到云端'); return; }
+
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ 下载中...'; }
+
+    try {
+      const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      });
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+      const gist = await resp.json();
+      const file = gist.files && gist.files['mengtian-data.json'];
+      if (!file || !file.content) throw new Error('Gist内容为空');
+
+      if (!confirm('⚠️ 从云端加载将覆盖当前本地数据，确定继续？')) {
+        btn.disabled = false;
+        btn.textContent = '⬇ 从云端加载';
+        return;
+      }
+
+      if (Storage.importAll(file.content)) {
+        this.saveSettings({ lastSync: new Date().toISOString() });
+        document.getElementById('syncStatus').textContent =
+          '✅ 上次同步: ' + new Date().toLocaleString('zh-CN');
+        App.toast('☁ 数据已从云端加载，刷新页面生效');
+        setTimeout(() => location.reload(), 1200);
+      } else {
+        throw new Error('数据格式无效');
+      }
+    } catch (e) {
+      App.toast('❌ 加载失败: ' + e.message);
+    }
+    if (btn) { btn.disabled = false; btn.textContent = '⬇ 从云端加载'; }
   },
 };
