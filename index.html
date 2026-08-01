@@ -41,6 +41,10 @@
       <div class="nav-item" data-page="todos">
         <span class="nav-icon">☑</span> 今日待办
       </div>
+      <div class="nav-item" data-page="reminders">
+        <span class="nav-icon">🔔</span> 提醒事项
+        <span class="nav-badge" id="remindersBadge" style="display:none"></span>
+      </div>
       <div class="nav-item" data-page="bookshelf">
         <span class="nav-icon">📚</span> 我的书架
       </div>
@@ -238,6 +242,41 @@
           <span style="margin:0 8px;color:var(--text-tertiary)">|</span>
           <span style="font-size:12px;color:var(--text-tertiary)">💡 点击日历日期可直接添加截止日待办</span>
         </div>
+      </div>
+
+      <!-- ===== Page: 提醒事项 (Reminders) ===== -->
+      <div class="page" id="page-reminders">
+        <!-- Add Form -->
+        <div class="glass-card mb-md">
+          <div class="section-title">🔔 新建提醒</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <input type="text" class="input" id="reminderTitle" placeholder="提醒内容，如：开会、喝水、取快递">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <input type="date" class="input" id="reminderDate" style="flex:1;min-width:120px">
+              <input type="time" class="input" id="reminderTime" style="flex:1;min-width:110px" value="09:00">
+              <input type="text" class="input" id="reminderNote" placeholder="备注 (可选)" style="flex:2;min-width:140px">
+            </div>
+            <div style="display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap">
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <span style="font-size:11px;color:var(--text-tertiary)">快速设置：</span>
+                <button class="btn btn-xs btn-secondary" onclick="RemindersModule.quickAdd(5)">5分钟后</button>
+                <button class="btn btn-xs btn-secondary" onclick="RemindersModule.quickAdd(15)">15分钟后</button>
+                <button class="btn btn-xs btn-secondary" onclick="RemindersModule.quickAdd(30)">30分钟后</button>
+                <button class="btn btn-xs btn-secondary" onclick="RemindersModule.quickAdd(60)">1小时后</button>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="RemindersModule.addReminder()">🔔 设置提醒</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- List header -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="section-title" style="margin-bottom:0">📋 提醒列表</div>
+          <button class="btn btn-xs btn-ghost" onclick="RemindersModule.clearTriggered()">清除已完成</button>
+        </div>
+
+        <!-- Reminder Cards -->
+        <div id="remindersList"></div>
       </div>
 
       <!-- ===== Page: 今日待办 (Todos) ===== -->
@@ -740,6 +779,7 @@
 <script src="js/modules/dashboard.js"></script>
 <script src="js/modules/hotspots.js"></script>
 <script src="js/modules/calendar.js"></script>
+<script src="js/modules/reminders.js"></script>
 <script src="js/modules/todos.js"></script>
 <script src="js/modules/bookshelf.js"></script>
 <script src="js/modules/learning.js"></script>

@@ -768,6 +768,22 @@ select.input {
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
+/* --- Reminders Module --- */
+.reminder-card {
+  transition: all var(--transition-smooth);
+}
+.reminder-card.reminder-overdue {
+  border-left: 3px solid var(--accent-red);
+  animation: reminderPulse 3s ease-in-out infinite;
+}
+.reminder-card.reminder-done {
+  opacity: 0.55;
+}
+@keyframes reminderPulse {
+  0%, 100% { box-shadow: var(--glass-shadow); }
+  50% { box-shadow: 0 0 16px rgba(237, 142, 134, 0.2), 0 2px 8px rgba(0,0,0,0.04); }
+}
+
 /* --- Countdown Module --- */
 .countdown-card {
   transition: all var(--transition-smooth);
@@ -1143,6 +1159,15 @@ select.input {
   #weightChart { overflow-x: auto; }
   #weightChart svg { width: 100% !important; height: auto !important; min-width: 300px; }
   #exerciseTodayRecords [style*="justify-content:space-between"] { flex-wrap: wrap; gap: 4px; }
+
+  /* =========== REMINDERS =========== */
+  #page-reminders .reminder-card > div {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  #page-reminders [style*="min-width:56px"] {
+    min-width: 48px !important;
+  }
 
   /* =========== COUNTDOWN =========== */
   #page-countdown .countdown-card > div > div:first-child {
