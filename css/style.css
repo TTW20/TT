@@ -75,8 +75,6 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
   user-select: none;
-  /* PWA: push content below Dynamic Island / notch */
-  padding-top: env(safe-area-inset-top, 0px);
 }
 
 /* Prevent 300ms tap delay in PWA standalone */
@@ -127,6 +125,7 @@ body::before {
   display: flex;
   flex-direction: column;
   padding: 24px 14px;
+  padding-top: calc(24px + env(safe-area-inset-top, 0px));
   z-index: 10;
   transition: transform var(--transition-smooth);
 }
@@ -214,6 +213,7 @@ body::before {
 .top-bar {
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 28px;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
   flex-shrink: 0;
   background: rgba(255, 255, 255, 0.40);
   backdrop-filter: blur(36px) saturate(170%);
@@ -900,7 +900,8 @@ select.input {
   backdrop-filter: blur(30px) saturate(160%);
   -webkit-backdrop-filter: blur(30px) saturate(160%);
   border-top: 1px solid var(--glass-border);
-  padding: 6px 8px calc(10px + env(safe-area-inset-bottom, 0px));
+  padding: 5px 8px;
+  padding-bottom: calc(5px + env(safe-area-inset-bottom, 0px));
 }
 
 .mobile-bottom-nav-inner {
@@ -964,6 +965,7 @@ select.input {
   /* ---- Top bar ---- */
   .top-bar {
     padding: 10px 14px;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
     gap: 10px;
     position: relative;
   }
@@ -1327,6 +1329,7 @@ select.input {
   }
   .top-bar {
     padding: 9px 10px;
+    padding-top: calc(9px + env(safe-area-inset-top, 0px));
     position: relative;
   }
   .top-bar-title {
