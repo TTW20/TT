@@ -4,7 +4,7 @@
  */
 const App = {
   currentPage: 'dashboard',
-  pages: ['dashboard', 'hotspots', 'calendar', 'todos', 'bookshelf', 'learning', 'water', 'review', 'exercise', 'inspiration'],
+  pages: ['dashboard', 'hotspots', 'calendar', 'todos', 'bookshelf', 'learning', 'water', 'review', 'exercise', 'inspiration', 'settings'],
 
   init() {
     Storage.init();
@@ -26,6 +26,7 @@ const App = {
     ReviewModule.init();
     ExerciseModule.init();
     InspirationModule.init();
+    SettingsModule.init();
   },
 
   bindNavigation() {
@@ -64,7 +65,7 @@ const App = {
     const titles = {
       dashboard: '工作台概览', hotspots: '今日热点', calendar: '日历',
       todos: '今日待办', bookshelf: '我的书架', learning: '学习中心', water: '喝水时间',
-      review: '今日复盘', exercise: '今日运动', inspiration: '今日灵感'
+      review: '今日复盘', exercise: '今日运动', inspiration: '今日灵感', settings: '个性化设置'
     };
     document.querySelector('.top-bar-title').textContent = titles[pageId] || pageId;
     this.currentPage = pageId;
@@ -109,6 +110,7 @@ const App = {
       review: () => ReviewModule.refresh(),
       exercise: () => ExerciseModule.refresh(),
       inspiration: () => InspirationModule.refresh(),
+      settings: () => SettingsModule.refresh(),
     };
     if (refreshers[pageId]) refreshers[pageId]();
   },
