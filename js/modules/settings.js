@@ -130,19 +130,35 @@ const SettingsModule = {
           <button class="btn btn-danger btn-sm" onclick="SettingsModule.resetAll()">🗑 重置数据</button>
         </div>
 
-      <!-- Clipboard Sync (primary) -->
+      <!-- Device Sync (primary) -->
       <div class="glass-card mb-md" style="border:2px solid var(--accent-blue);border-radius:var(--radius-lg)">
-        <div class="section-title">📋 设备间同步 (推荐)</div>
-        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6">
-          两步完成跨设备同步，无需注册账号：
+        <div class="section-title">📲 设备间同步</div>
+
+        <!-- One-tap share -->
+        <div style="text-align:center;margin-bottom:14px">
+          <button class="btn btn-primary" onclick="SettingsModule.shareData()" style="font-size:15px;padding:12px 28px;width:100%">
+            📤 发送数据到另一台设备
+          </button>
+          <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">
+            手机弹出分享菜单 → 选微信/AirDrop/蓝牙发给电脑
+          </div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-          <button class="btn btn-primary btn-sm" onclick="SettingsModule.copyToClipboard()" style="flex:1;min-width:120px">📋 1. 复制数据</button>
-          <button class="btn btn-primary btn-sm" onclick="SettingsModule.pasteFromClipboard()" style="flex:1;min-width:120px">📌 2. 粘贴导入</button>
+
+        <!-- Import -->
+        <div style="text-align:center;padding-top:14px;border-top:1px solid var(--glass-border)">
+          <button class="btn btn-secondary" onclick="SettingsModule.receiveFile()" style="font-size:15px;padding:12px 28px;width:100%">
+            📥 接收并导入数据
+          </button>
+          <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px">
+            在接收设备上点这里 → 选择收到的文件 → 自动导入
+          </div>
         </div>
-        <div style="font-size:11px;color:var(--text-tertiary);line-height:1.5">
-          <b>电脑 → 手机</b>：电脑点复制 → 发到微信 → 手机复制 → 点粘贴导入<br>
-          <b>手机 → 电脑</b>：手机点复制 → 发到微信 → 电脑复制 → 点粘贴导入
+
+        <!-- Fallback -->
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-border);text-align:center">
+          <span style="font-size:10px;color:var(--text-placeholder)">备用：</span>
+          <button class="btn btn-xs btn-ghost" onclick="SettingsModule.copyToClipboard()">📋 复制</button>
+          <button class="btn btn-xs btn-ghost" onclick="SettingsModule.pasteFromClipboard()">📌 粘贴</button>
         </div>
       </div>
 
@@ -314,7 +330,62 @@ const SettingsModule = {
     setTimeout(() => location.reload(), 1500);
   },
 
-  // ===== Clipboard Sync (no GitHub needed) =====
+  // ===== File Share (one-tap) =====
+  async shareData() {
+    const dataJson = Storage.exportAll();
+    const blob = new Blob([dataJson], { type: 'application/json' });
+    const file = new File([blob], `mengtian-${App.today()}.json`, { type: 'application/json' });
+
+    // Try Web Share API first (works on mobile Safari/Chrome)
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          title: '梦天工作台数据',
+          text: '工作台同步数据',
+          files: [file],
+        });
+        App.toast('📤 已发送！在另一台设备上点「接收并导入」');
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') return; // user cancelled
+        // Fall through to fallback
+      }
+    }
+
+    // Fallback for desktop: download file + copy to clipboard
+    App.toast('📤 文件已下载，发送给另一台设备即可');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `mengtian-${App.today()}.json`;
+    a.click();
+
+    // Also try clipboard
+    try { await navigator.clipboard.writeText(dataJson); } catch {}
+  },
+
+  receiveFile() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (!confirm('⚠️ 导入将覆盖当前所有数据，确定继续？')) return;
+        if (Storage.importAll(ev.target.result)) {
+          App.toast('✅ 数据已导入！页面刷新中');
+          setTimeout(() => location.reload(), 800);
+        } else {
+          App.toast('❌ 文件格式无效');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  },
+
+  // ===== Clipboard (fallback) =====
   async copyToClipboard() {
     try {
       const dataJson = Storage.exportAll();
