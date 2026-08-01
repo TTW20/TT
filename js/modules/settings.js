@@ -121,6 +121,15 @@ const SettingsModule = {
         <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px">选择你喜欢的主题强调色，全局生效</div>
       </div>
 
+      <!-- Data Management -->
+      <div class="glass-card mb-md">
+        <div class="section-title">💾 本地数据</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="SettingsModule.exportData()">📤 导出JSON</button>
+          <button class="btn btn-secondary btn-sm" onclick="SettingsModule.importData()">📥 导入JSON</button>
+          <button class="btn btn-danger btn-sm" onclick="SettingsModule.resetAll()">🗑 重置数据</button>
+        </div>
+
       <!-- Cloud Sync -->
       <div class="glass-card mb-md">
         <div class="section-title">☁ 云同步 · GitHub Gist</div>
@@ -142,15 +151,6 @@ const SettingsModule = {
           ${s.gistId ? '<span>Gist ID: ' + s.gistId.slice(0, 8) + '...</span>' : ''}
         </div>
       </div>
-
-      <!-- Data Management -->
-      <div class="glass-card mb-md">
-        <div class="section-title">💾 本地数据</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn btn-secondary btn-sm" onclick="SettingsModule.exportData()">📤 导出JSON</button>
-          <button class="btn btn-secondary btn-sm" onclick="SettingsModule.importData()">📥 导入JSON</button>
-          <button class="btn btn-danger btn-sm" onclick="SettingsModule.resetAll()">🗑 重置数据</button>
-        </div>
       </div>
 
       <!-- About -->
