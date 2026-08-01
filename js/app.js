@@ -4,7 +4,7 @@
  */
 const App = {
   currentPage: 'dashboard',
-  pages: ['dashboard', 'hotspots', 'calendar', 'todos', 'bookshelf', 'learning', 'water', 'review', 'exercise', 'inspiration', 'settings'],
+  pages: ['dashboard', 'hotspots', 'calendar', 'todos', 'bookshelf', 'learning', 'countdown', 'water', 'review', 'exercise', 'inspiration', 'settings'],
 
   init() {
     Storage.init();
@@ -22,6 +22,7 @@ const App = {
     TodoModule.init();
     BookshelfModule.init();
     LearningModule.init();
+    CountdownModule.init();
     WaterModule.init();
     ReviewModule.init();
     ExerciseModule.init();
@@ -64,7 +65,7 @@ const App = {
     // Update title
     const titles = {
       dashboard: '工作台概览', hotspots: '今日热点', calendar: '日历',
-      todos: '今日待办', bookshelf: '我的书架', learning: '学习中心', water: '喝水时间',
+      todos: '今日待办', bookshelf: '我的书架', learning: '学习中心', countdown: '倒计时', water: '喝水时间',
       review: '今日复盘', exercise: '今日运动', inspiration: '今日灵感', settings: '个性化设置'
     };
     document.querySelector('.top-bar-title').textContent = titles[pageId] || pageId;
@@ -106,6 +107,7 @@ const App = {
       todos: () => TodoModule.refresh(),
       bookshelf: () => BookshelfModule.refresh(),
       learning: () => LearningModule.refresh(),
+      countdown: () => CountdownModule.refresh(),
       water: () => WaterModule.refresh(),
       review: () => ReviewModule.refresh(),
       exercise: () => ExerciseModule.refresh(),

@@ -47,6 +47,9 @@
       <div class="nav-item" data-page="learning">
         <span class="nav-icon">📖</span> 学习中心
       </div>
+      <div class="nav-item" data-page="countdown">
+        <span class="nav-icon">⏳</span> 倒计时
+      </div>
       <div class="nav-item" data-page="water">
         <span class="nav-icon">💧</span> 喝水时间
       </div>
@@ -628,6 +631,64 @@
         </div>
       </div>
 
+      <!-- ===== Page: 倒计时 (Countdown) ===== -->
+      <div class="page" id="page-countdown">
+        <!-- Add Form (collapsible) -->
+        <div class="glass-card mb-md" id="countdownForm" style="display:none">
+          <div class="section-title" id="countdownFormTitle">✚ 添加倒计时</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <div style="flex:2;min-width:140px">
+                <label style="font-size:11px;color:var(--text-tertiary)">名称 *</label>
+                <input type="text" class="input" id="countdownName" placeholder="如：考研笔试、教资考试、期末">
+              </div>
+              <div style="flex:1;min-width:120px">
+                <label style="font-size:11px;color:var(--text-tertiary)">目标日期 *</label>
+                <input type="date" class="input" id="countdownTargetDate">
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <div style="flex:1;min-width:120px">
+                <label style="font-size:11px;color:var(--text-tertiary)">开始日期 (可选)</label>
+                <input type="date" class="input" id="countdownStartDate" placeholder="计算进度用">
+              </div>
+              <div style="flex:1;min-width:100px">
+                <label style="font-size:11px;color:var(--text-tertiary)">主题色</label>
+                <input type="color" class="input" id="countdownColor" value="#7EB0DD" style="height:40px;cursor:pointer;padding:4px">
+              </div>
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--text-tertiary)">备注</label>
+              <input type="text" class="input" id="countdownNote" placeholder="如：笔试地点、考试科目等">
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+              <button class="btn btn-sm btn-ghost" onclick="CountdownModule.hideForm()">取消</button>
+              <button class="btn btn-sm btn-primary" onclick="CountdownModule.saveCountdown()">💾 保存</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Top bar with add button -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div class="section-title" style="margin-bottom:0">⏳ 我的倒计时</div>
+          <button class="btn btn-sm btn-primary" onclick="CountdownModule.showAddForm()">✚ 添加倒计时</button>
+        </div>
+
+        <!-- Countdown Cards -->
+        <div id="countdownList"></div>
+
+        <!-- Quick presets -->
+        <div class="glass-card flat mt-md" style="text-align:center;padding:16px">
+          <span style="font-size:12px;color:var(--text-tertiary);margin-right:10px">快速添加：</span>
+          <button class="btn btn-xs btn-secondary" onclick="CountdownModule.quickAdd('考研笔试')">📝 考研</button>
+          <button class="btn btn-xs btn-secondary" onclick="CountdownModule.quickAdd('教资考试')">📋 教资</button>
+          <button class="btn btn-xs btn-secondary" onclick="CountdownModule.quickAdd('期末考试')">📚 期末</button>
+          <button class="btn btn-xs btn-secondary" onclick="CountdownModule.quickAdd('公务员考试')">🏛 公考</button>
+          <button class="btn btn-xs btn-secondary" onclick="CountdownModule.quickAdd('英语四级')">🌍 四级</button>
+          <button class="btn btn-xs btn-secondary" onclick="CountdownModule.quickAdd('英语六级')">🌍 六级</button>
+        </div>
+      </div>
+
       <!-- ===== Page: 个性化设置 (Settings) ===== -->
       <div class="page" id="page-settings">
         <div id="settingsContent"></div>
@@ -686,6 +747,7 @@
 <script src="js/modules/review.js"></script>
 <script src="js/modules/exercise.js"></script>
 <script src="js/modules/inspiration.js"></script>
+<script src="js/modules/countdown.js"></script>
 <script src="js/modules/settings.js"></script>
 <script src="js/app.js"></script>
 
