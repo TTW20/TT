@@ -201,18 +201,72 @@ const RemindersModule = {
   switchRepeatType(type) {
     this.repeatType = type;
     document.querySelectorAll('#reminderRepeatToggle .btn').forEach(b => b.classList.remove('btn-primary'));
-    document.querySelector(`#reminderRepeatToggle [data-type="${type}"]`).classList.add('btn-primary');
+    const sel = document.querySelector(`#reminderRepeatToggle [data-type="${type}"]`);
+    if (sel) sel.classList.add('btn-primary');
 
     // Show/hide relevant fields
     const onceFields = document.getElementById('reminderOnceFields');
     const repeatFields = document.getElementById('reminderRepeatFields');
     if (type === 'once') {
-      onceFields.style.display = '';
-      repeatFields.style.display = 'none';
+      if (onceFields) onceFields.style.display = '';
+      if (repeatFields) repeatFields.style.display = 'none';
     } else {
-      onceFields.style.display = 'none';
-      repeatFields.style.display = '';
+      if (onceFields) onceFields.style.display = 'none';
+      if (repeatFields) repeatFields.style.display = '';
+      this.initTimeSlots();
     }
+  },
+
+  // ===== Time Slot Management =====
+  initTimeSlots(defaultTimes) {
+    const container = document.getElementById('reminderTimesList');
+    if (!container) return;
+    const times = defaultTimes || ['09:00'];
+    container.innerHTML = '';
+    times.forEach(t => this.renderTimeSlot(t));
+    this.syncTimesInput();
+  },
+
+  addTimeSlot(timeVal) {
+    const container = document.getElementById('reminderTimesList');
+    if (!container) return;
+    this.renderTimeSlot(timeVal || '09:00');
+    this.syncTimesInput();
+  },
+
+  renderTimeSlot(timeVal) {
+    const container = document.getElementById('reminderTimesList');
+    if (!container) return;
+    const idx = container.children.length;
+    const id = 'timeSlot_' + idx;
+    container.insertAdjacentHTML('beforeend', `
+      <div class="time-slot-row" style="display:flex;align-items:center;gap:8px" id="${id}">
+        <input type="time" class="input time-slot-input" value="${timeVal}" onchange="RemindersModule.syncTimesInput()" style="flex:1;min-width:0;max-width:160px">
+        ${idx > 0 ? `<button class="btn-icon" style="width:28px;height:28px;flex-shrink:0" onclick="RemindersModule.removeTimeSlot('${id}')" title="删除">✕</button>` : `<span style="width:28px;flex-shrink:0"></span>`}
+      </div>
+    `);
+  },
+
+  removeTimeSlot(id) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.transition = 'all 0.25s';
+      el.style.opacity = '0';
+      el.style.transform = 'translateX(-20px)';
+      setTimeout(() => {
+        el.remove();
+        this.syncTimesInput();
+      }, 250);
+    }
+  },
+
+  syncTimesInput() {
+    const inputs = document.querySelectorAll('.time-slot-input');
+    const times = [];
+    inputs.forEach(inp => {
+      if (inp.value) times.push(inp.value);
+    });
+    document.getElementById('reminderTimes').value = times.join(',');
   },
 
   addReminder() {
@@ -291,23 +345,22 @@ const RemindersModule = {
     if (type === 'pill') {
       this.switchRepeatType('daily');
       document.getElementById('reminderTitle').value = '💊 吃药';
-      document.getElementById('reminderTimes').value = '08:00, 12:30, 18:30';
+      this.initTimeSlots(['08:00', '12:30', '18:30']);
       document.getElementById('reminderNote').value = '饭后半小时服用';
       App.toast('💊 已填入吃药提醒 (早中晚)');
     } else if (type === 'water') {
       this.switchRepeatType('daily');
       document.getElementById('reminderTitle').value = '💧 喝水';
-      document.getElementById('reminderTimes').value = '09:00, 11:00, 14:00, 16:00, 19:00';
+      this.initTimeSlots(['09:00', '11:00', '14:00', '16:00', '19:00']);
       document.getElementById('reminderNote').value = '每次200ml';
       App.toast('💧 已填入喝水提醒 (5次/天)');
     } else if (type === 'sleep') {
       this.switchRepeatType('daily');
       document.getElementById('reminderTitle').value = '😴 睡觉';
-      document.getElementById('reminderTimes').value = '22:30';
+      this.initTimeSlots(['22:30']);
       document.getElementById('reminderNote').value = '放下手机，准备休息';
       App.toast('😴 已填入睡觉提醒');
     }
-    document.getElementById('reminderTitle').focus();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   },
 
