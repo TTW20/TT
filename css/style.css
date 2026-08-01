@@ -900,17 +900,18 @@ select.input {
   backdrop-filter: blur(30px) saturate(160%);
   -webkit-backdrop-filter: blur(30px) saturate(160%);
   border-top: 1px solid var(--glass-border);
-  padding: 5px 8px env(safe-area-inset-bottom, 6px);
+  padding: 6px 8px calc(10px + env(safe-area-inset-bottom, 0px));
 }
 
 .mobile-bottom-nav-inner {
   display: flex; justify-content: space-around; align-items: center;
   max-width: 500px; margin: 0 auto;
+  padding-top: 2px;
 }
 
 .mobile-nav-item {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 5px 10px; border-radius: var(--radius-sm);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 4px 10px 5px; border-radius: var(--radius-sm);
   cursor: pointer; transition: all var(--transition-fast);
   color: var(--text-tertiary); font-size: 10px;
   min-width: 52px; text-decoration: none;
@@ -964,8 +965,19 @@ select.input {
   .top-bar {
     padding: 10px 14px;
     gap: 10px;
+    position: relative;
   }
-  .top-bar-title { font-size: 17px; }
+  .top-bar-title {
+    font-size: 17px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .top-bar-actions {
+    margin-left: auto;
+  }
 
   /* ---- Sidebar mobile (fixed position - needs own safe area) ---- */
   .sidebar {
@@ -1315,8 +1327,16 @@ select.input {
   }
   .top-bar {
     padding: 9px 10px;
+    position: relative;
   }
-  .top-bar-title { font-size: 16px; }
+  .top-bar-title {
+    font-size: 16px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
 
   /* Sidebar narrower */
   .sidebar {
