@@ -130,33 +130,46 @@ const SettingsModule = {
           <button class="btn btn-danger btn-sm" onclick="SettingsModule.resetAll()">🗑 重置数据</button>
         </div>
 
-      <!-- Cloud Sync -->
-      <div class="glass-card mb-md">
-        <div class="section-title">☁ 云同步 · GitHub Gist</div>
+      <!-- Clipboard Sync (primary) -->
+      <div class="glass-card mb-md" style="border:2px solid var(--accent-blue);border-radius:var(--radius-lg)">
+        <div class="section-title">📋 设备间同步 (推荐)</div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6">
-          将数据同步到 GitHub 私有 Gist，电脑和手机之间自动同步。<br>
-          <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--accent-blue)">→ 点此创建 Token</a>，勾选 <b>gist</b> 权限，生成后粘贴到下方。
+          两步完成跨设备同步，无需注册账号：
         </div>
-        <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px">
-          <input type="password" class="input" id="settingGistToken" placeholder="GitHub Personal Access Token" style="flex:2;min-width:200px;font-family:monospace;font-size:12px"
-                 value="${s.gistToken || ''}">
-          <button class="btn btn-sm btn-secondary" onclick="SettingsModule.saveToken()" style="flex-shrink:0">💾 保存Token</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <button class="btn btn-primary btn-sm" onclick="SettingsModule.copyToClipboard()" style="flex:1;min-width:120px">📋 1. 复制数据</button>
+          <button class="btn btn-primary btn-sm" onclick="SettingsModule.pasteFromClipboard()" style="flex:1;min-width:120px">📌 2. 粘贴导入</button>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-          <button class="btn btn-sm btn-primary" onclick="SettingsModule.cloudUpload(this)">☁ 上传到云端</button>
-          <button class="btn btn-sm btn-secondary" onclick="SettingsModule.cloudDownload(this)">⬇ 从云端加载</button>
+        <div style="font-size:11px;color:var(--text-tertiary);line-height:1.5">
+          <b>电脑 → 手机</b>：电脑点复制 → 发到微信 → 手机复制 → 点粘贴导入<br>
+          <b>手机 → 电脑</b>：手机点复制 → 发到微信 → 电脑复制 → 点粘贴导入
         </div>
-        <div style="display:flex;gap:16px;align-items:center;margin-top:8px;font-size:11px;color:var(--text-tertiary)">
-          <span id="syncStatus">${s.lastSync ? '上次同步: ' + new Date(s.lastSync).toLocaleString('zh-CN') : '尚未同步'}</span>
-          ${s.gistId ? '<span>Gist ID: ' + s.gistId.slice(0, 8) + '...</span>' : ''}
-        </div>
-        <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-border)">
-          <span style="font-size:11px;color:var(--text-tertiary)">无需Token的同步方式：</span>
-          <div style="display:flex;gap:6px;margin-top:6px">
-            <button class="btn btn-xs btn-secondary" onclick="SettingsModule.copyToClipboard()">📋 复制数据</button>
-            <button class="btn btn-xs btn-secondary" onclick="SettingsModule.pasteFromClipboard()">📌 粘贴导入</button>
+      </div>
+
+      <!-- GitHub Gist Cloud Sync (secondary) -->
+      <div class="glass-card flat mb-md">
+        <details style="cursor:pointer">
+          <summary style="font-size:13px;font-weight:560;color:var(--text-secondary);padding:4px 0">
+            ☁ 高级：GitHub 云同步 (部分手机可能无法连接)
+          </summary>
+          <div style="margin-top:12px">
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.6">
+              <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--accent-blue)">→ 点此创建 Token</a>，勾选 <b>gist</b> 权限，粘贴到下方。
+            </div>
+            <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
+              <input type="password" class="input" id="settingGistToken" placeholder="ghp_xxxxxxxxxxxx" style="flex:2;min-width:180px;font-family:monospace;font-size:12px"
+                     value="${s.gistToken || ''}">
+              <button class="btn btn-sm btn-secondary" onclick="SettingsModule.saveToken()" style="flex-shrink:0">💾 保存</button>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn btn-sm btn-primary" onclick="SettingsModule.cloudUpload(this)">☁ 上传</button>
+              <button class="btn btn-sm btn-secondary" onclick="SettingsModule.cloudDownload(this)">⬇ 加载</button>
+            </div>
+            <div style="font-size:10px;color:var(--text-tertiary);margin-top:6px">
+              <span id="syncStatus">${s.lastSync ? '上次同步: ' + new Date(s.lastSync).toLocaleString('zh-CN') : '未同步'}</span>
+            </div>
           </div>
-        </div>
+        </details>
       </div>
       </div>
 
