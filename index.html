@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="梦天工作台">
+<meta name="theme-color" content="#E8ECF1">
+<title>梦天工作台 · Dream Sky Workbench</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌤</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%235B9BD5'/><stop offset='100%25' stop-color='%239B8EC4'/></linearGradient></defs><rect width='192' height='192' rx='44' fill='url(%23g)'/><text x='96' y='130' font-size='110' text-anchor='middle' fill='white' font-family='sans-serif'>🌤</text></svg>">
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Sidebar overlay for mobile -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="App.closeSidebar()"></div>
+
+  <!-- ===== Left Sidebar ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🌤</div>
+      <div class="logo-text">梦天工作台</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">◉</span> 工作台概览
+      </div>
+      <div class="nav-item" data-page="hotspots">
+        <span class="nav-icon">◎</span> 今日热点
+        <span class="nav-badge" id="hotspotsBadge" style="display:none">NEW</span>
+      </div>
+      <div style="height:1px;background:var(--glass-border);margin:6px 8px"></div>
+      <div class="nav-item" data-page="calendar">
+        <span class="nav-icon">📅</span> 日历
+      </div>
+      <div class="nav-item" data-page="todos">
+        <span class="nav-icon">☑</span> 今日待办
+      </div>
+      <div class="nav-item" data-page="bookshelf">
+        <span class="nav-icon">📚</span> 我的书架
+      </div>
+      <div class="nav-item" data-page="learning">
+        <span class="nav-icon">📖</span> 学习中心
+      </div>
+      <div class="nav-item" data-page="water">
+        <span class="nav-icon">💧</span> 喝水时间
+      </div>
+      <div class="nav-item" data-page="review">
+        <span class="nav-icon">📝</span> 今日复盘
+      </div>
+      <div class="nav-item" data-page="exercise">
+        <span class="nav-icon">🏃</span> 今日运动
+      </div>
+      <div class="nav-item" data-page="inspiration">
+        <span class="nav-icon">💡</span> 今日灵感
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div style="font-size:11px;color:var(--text-tertiary);padding:4px 10px;text-align:center" id="sidebarDate">
+        <span id="sidebarClock">--:--</span>
+      </div>
+      <button class="btn btn-ghost btn-sm w-full" onclick="App.toast('数据已自动保存到本地浏览器')" style="font-size:11px">
+        💾 数据本地存储
+      </button>
+      <button class="btn btn-ghost btn-sm w-full" onclick="if(confirm('导出所有数据？')){const b=new Blob([Storage.exportAll()],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='mengtian-backup-'+App.today()+'.json';a.click();App.toast('📦 数据已导出')}" style="font-size:11px">
+        📤 导出数据
+      </button>
+      <button class="btn btn-ghost btn-sm w-full" onclick="const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];const r=new FileReader();r.onload=ev=>{if(Storage.importAll(ev.target.result)){App.toast('📥 数据已导入');location.reload()}else{App.toast('导入失败')}};r.readAsText(f)};i.click()" style="font-size:11px">
+        📥 导入数据
+      </button>
+    </div>
+  </aside>
+
+  <!-- ===== Main Content ===== -->
+  <main class="main-content">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <button class="hamburger-btn" onclick="App.toggleSidebar()" aria-label="菜单">☰</button>
+      <div class="top-bar-title">工作台概览</div>
+      <div class="top-bar-actions">
+        <span class="top-bar-date" id="topBarDate"></span>
+      </div>
+    </div>
+
+    <!-- Scrollable Content -->
+    <div class="content-scroll">
+
+      <!-- ===== Page: 工作台概览 (Dashboard) ===== -->
+      <div class="page active" id="page-dashboard">
+        <!-- Quick Entry Bar -->
+        <div class="quick-entry-bar">
+          <div class="quick-entry-item" data-page="calendar">
+            <div class="quick-entry-icon" style="background:linear-gradient(135deg,#5B9BD5,#7B8EC4)">📅</div>
+            <div class="quick-entry-label">日历</div>
+          </div>
+          <div class="quick-entry-item" data-page="todos">
+            <div class="quick-entry-icon" style="background:linear-gradient(135deg,#E0736A,#E8A860)">☑</div>
+            <div class="quick-entry-label">待办</div>
+          </div>
+          <div class="quick-entry-item" data-page="bookshelf">
+            <div class="quick-entry-icon" style="background:linear-gradient(135deg,#9B8EC4,#D4919A)">📚</div>
+            <div class="quick-entry-label">书架</div>
+          </div>
+          <div class="quick-entry-item" data-page="water">
+            <div class="quick-entry-icon" style="background:linear-gradient(135deg,#6BB5C4,#5B9BD5)">💧</div>
+            <div class="quick-entry-label">喝水</div>
+          </div>
+          <div class="quick-entry-item" data-page="review">
+            <div class="quick-entry-icon" style="background:linear-gradient(135deg,#7BAF7B,#5BAFA5)">📝</div>
+            <div class="quick-entry-label">复盘</div>
+          </div>
+          <div class="quick-entry-item" data-page="exercise">
+            <div class="quick-entry-icon" style="background:linear-gradient(135deg,#E8A860,#D4919A)">🏃</div>
+            <div class="quick-entry-label">运动</div>
+          </div>
+          <div class="quick-entry-item" data-page="inspiration">
+            <div class="quick-entry-icon" style="background:linear-gradient(135deg,#D4919A,#9B8EC4)">💡</div>
+            <div class="quick-entry-label">灵感</div>
+          </div>
+          <div class="quick-entry-item" data-page="learning">
+            <div class="quick-entry-icon" style="background:linear-gradient(135deg,#5BAFA5,#7BAF7B)">📖</div>
+            <div class="quick-entry-label">学习</div>
+          </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+          <!-- Todo Progress Ring -->
+          <div class="glass-card">
+            <div class="dashboard-card-header">
+              <div class="dashboard-card-title">☑ 今日待办进度</div>
+              <button class="btn btn-ghost btn-xs" onclick="App.showPage('todos')">查看全部 →</button>
+            </div>
+            <div class="ring-chart-container">
+              <div class="ring-chart" id="dashTodoRing"></div>
+              <div>
+                <div class="ring-chart-value" id="dashTodoValue">0%</div>
+                <div class="ring-chart-label" id="dashTodoSub">0/0 完成</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Water Progress -->
+          <div class="glass-card">
+            <div class="dashboard-card-header">
+              <div class="dashboard-card-title">💧 今日饮水</div>
+              <button class="btn btn-ghost btn-xs" onclick="App.showPage('water')">去喝水 →</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+              <span style="font-size:32px;font-weight:200;color:var(--accent-cyan)" id="dashWaterPct">0%</span>
+              <span style="font-size:13px;color:var(--text-secondary)" id="dashWaterValue">0ml / 2000ml</span>
+            </div>
+            <div class="water-progress-bar">
+              <div class="water-progress-fill" id="dashWaterFill" style="width:0%"></div>
+            </div>
+            <div style="margin-top:8px;display:flex;gap:6px">
+              <button class="btn btn-xs btn-secondary" onclick="WaterModule.addWater(200);DashboardModule.refresh()">💧 200ml</button>
+              <button class="btn btn-xs btn-secondary" onclick="WaterModule.addWater(300);DashboardModule.refresh()">💧 300ml</button>
+              <button class="btn btn-xs btn-secondary" onclick="WaterModule.addWater(500);DashboardModule.refresh()">💧 500ml</button>
+            </div>
+          </div>
+
+          <!-- Reading Card -->
+          <div class="glass-card">
+            <div class="dashboard-card-header">
+              <div class="dashboard-card-title">📖 正在阅读</div>
+              <button class="btn btn-ghost btn-xs" onclick="App.showPage('bookshelf')">书架 →</button>
+            </div>
+            <div id="dashReadingCard"></div>
+          </div>
+
+          <!-- Quick Inspiration -->
+          <div class="glass-card">
+            <div class="dashboard-card-header">
+              <div class="dashboard-card-title">💡 今日灵感速记</div>
+            </div>
+            <textarea class="quick-note-input" id="quickNoteInput" placeholder="💡 记录此刻灵感..."></textarea>
+            <div style="display:flex;justify-content:flex-end;margin-top:10px;gap:8px">
+              <button class="btn btn-sm btn-secondary" onclick="document.getElementById('quickNoteInput').value=''">清空</button>
+              <button class="btn btn-sm btn-primary" onclick="DashboardModule.saveQuickNote()">💾 保存灵感</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Page: 今日热点 (Hotspots) ===== -->
+      <div class="page" id="page-hotspots">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+          <div class="section-title" style="margin-bottom:0">🔥 今日综合热点</div>
+          <button class="btn btn-sm btn-secondary" onclick="HotspotsModule.refreshTopics()">🔄 刷新热点</button>
+        </div>
+        <div id="hotspotsList" style="display:flex;flex-direction:column;gap:10px"></div>
+        <div id="hotspotsFavorites"></div>
+      </div>
+
+      <!-- ===== Page: 日历 (Calendar) ===== -->
+      <div class="page" id="page-calendar">
+        <!-- Monthly Calendar -->
+        <div class="glass-card mb-md">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <button class="btn-icon" onclick="CalendarModule.prevMonth()">◀</button>
+            <span style="font-size:17px;font-weight:620" id="calendarMonthLabel"></span>
+            <button class="btn-icon" onclick="CalendarModule.nextMonth()">▶</button>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+
+        <!-- Taoist Almanac + Horoscope -->
+        <div class="two-col">
+          <!-- 黄历 -->
+          <div class="glass-card">
+            <div class="section-title">☯ 道教黄历</div>
+            <div id="almanacContent"></div>
+          </div>
+          <!-- 星座运势 -->
+          <div class="glass-card">
+            <div class="section-title">✨ 星座运势</div>
+            <div id="horoscopeContent"></div>
+          </div>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="glass-card mt-md" style="text-align:center;padding:16px">
+          <span style="font-size:13px;color:var(--text-secondary)">快速操作：</span>
+          <button class="btn btn-sm btn-primary" onclick="App.showPage('todos');setTimeout(()=>document.getElementById('todoInput').focus(),300)">✚ 新建待办</button>
+          <span style="margin:0 8px;color:var(--text-tertiary)">|</span>
+          <span style="font-size:12px;color:var(--text-tertiary)">💡 点击日历日期可直接添加截止日待办</span>
+        </div>
+      </div>
+
+      <!-- ===== Page: 今日待办 (Todos) ===== -->
+      <div class="page" id="page-todos">
+        <div class="two-col">
+          <!-- Left: Todo List -->
+          <div>
+            <!-- Add Todo Form -->
+            <div class="glass-card mb-md">
+              <div class="section-title">✚ 新增待办</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <input type="text" class="input" id="todoInput" placeholder="输入待办事项..." onkeydown="if(event.key==='Enter')TodoModule.addTodo()">
+                <div style="display:flex;gap:8px">
+                  <input type="date" class="input" id="todoDeadline" style="flex:1" title="截止日期">
+                  <select class="input" id="todoPriority" style="flex:1">
+                    <option value="urgent">🔴 紧急重要</option>
+                    <option value="important">🟠 重要不紧急</option>
+                    <option value="normal" selected>🔵 紧急不重要</option>
+                    <option value="low">⚪ 普通琐事</option>
+                  </select>
+                </div>
+                <div style="display:flex;gap:8px">
+                  <input type="text" class="input" id="todoNote" placeholder="备注 (可选)" style="flex:1">
+                  <input type="text" class="input" id="todoTag" placeholder="标签 (逗号分隔)" style="flex:1">
+                </div>
+                <button class="btn btn-primary" onclick="TodoModule.addTodo()">✚ 添加待办</button>
+              </div>
+            </div>
+
+            <!-- Filter + Stats -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div id="todoFilters" style="display:flex;gap:6px;flex-wrap:wrap">
+                <button class="btn btn-xs btn-primary" data-filter="all" onclick="TodoModule.setFilter('all')">全部</button>
+                <button class="btn btn-xs btn-secondary" data-filter="active" onclick="TodoModule.setFilter('active')">进行中</button>
+                <button class="btn btn-xs btn-secondary" data-filter="completed" onclick="TodoModule.setFilter('completed')">已完成</button>
+                <button class="btn btn-xs btn-secondary" data-filter="overdue" onclick="TodoModule.setFilter('overdue')">⚠ 逾期</button>
+              </div>
+              <div style="display:flex;gap:4px">
+                <button class="btn btn-xs btn-ghost" onclick="TodoModule.clearCompleted()">清除已完成</button>
+                <button class="btn btn-xs btn-danger" onclick="TodoModule.clearAll()">清空全部</button>
+              </div>
+            </div>
+            <div id="todoStats" style="font-size:12px;margin-bottom:10px"></div>
+
+            <!-- Todo List -->
+            <div class="todo-list" id="todoList"></div>
+          </div>
+
+          <!-- Right: Pomodoro Timer -->
+          <div>
+            <div class="glass-card mb-md">
+              <div class="section-title">🍅 番茄专注</div>
+              <div class="pomodoro-container">
+                <div class="pomodoro-timer" id="pomodoroTimer">25:00</div>
+                <div class="pomodoro-status" id="pomodoroStatus">准备开始专注</div>
+                <div style="margin-top:16px" id="pomodoroBtnContainer">
+                  <button class="btn btn-primary" id="pomodoroBtn" onclick="TodoModule.startPomodoro()">🍅 开始专注</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pomodoro Settings -->
+            <div class="glass-card flat">
+              <div style="font-size:13px;font-weight:560;margin-bottom:10px">⚙ 番茄设置</div>
+              <div style="display:flex;gap:12px;align-items:center">
+                <div style="flex:1">
+                  <label style="font-size:11px;color:var(--text-tertiary)">专注时长 (分)</label>
+                  <input type="number" class="input" id="pomodoroFocusInput" value="25" min="5" max="60" style="text-align:center">
+                </div>
+                <div style="flex:1">
+                  <label style="font-size:11px;color:var(--text-tertiary)">休息时长 (分)</label>
+                  <input type="number" class="input" id="pomodoroBreakInput" value="5" min="1" max="30" style="text-align:center">
+                </div>
+                <button class="btn btn-sm btn-secondary" style="margin-top:16px" onclick="const s=Storage.getSettings();s.pomodoroFocus=parseInt(document.getElementById('pomodoroFocusInput').value);s.pomodoroBreak=parseInt(document.getElementById('pomodoroBreakInput').value);Storage.saveSettings(s);TodoModule.pomodoroFocusMin=s.pomodoroFocus;TodoModule.pomodoroBreakMin=s.pomodoroBreak;TodoModule.pomodoroSeconds=s.pomodoroFocus*60;TodoModule.updatePomodoroDisplay();App.toast('⚙ 番茄设置已更新')">保存</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Page: 我的书架 (Bookshelf) ===== -->
+      <div class="page" id="page-bookshelf">
+        <!-- Add Book Form -->
+        <div class="glass-card mb-md">
+          <div class="section-title">✚ 添加书籍</div>
+          <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+            <div style="flex:2;min-width:140px">
+              <label style="font-size:11px;color:var(--text-tertiary)">书名 *</label>
+              <input type="text" class="input" id="bookTitle" placeholder="输入书名">
+            </div>
+            <div style="flex:1;min-width:100px">
+              <label style="font-size:11px;color:var(--text-tertiary)">作者</label>
+              <input type="text" class="input" id="bookAuthor" placeholder="作者">
+            </div>
+            <div style="flex:1;min-width:80px">
+              <label style="font-size:11px;color:var(--text-tertiary)">总页数</label>
+              <input type="number" class="input" id="bookPages" placeholder="页数" min="0">
+            </div>
+            <div style="flex:1;min-width:100px">
+              <label style="font-size:11px;color:var(--text-tertiary)">分类</label>
+              <select class="input" id="bookList">
+                <option value="reading">正在阅读</option>
+                <option value="wantToRead">想读清单</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="BookshelfModule.addBook()" style="flex-shrink:0">✚ 添加</button>
+          </div>
+        </div>
+
+        <!-- Book List Tabs -->
+        <div id="bookshelfTabs" style="display:flex;gap:8px;margin-bottom:14px">
+          <button class="btn btn-sm btn-primary" data-tab="reading" onclick="BookshelfModule.switchTab('reading')">📖 正在阅读</button>
+          <button class="btn btn-sm btn-secondary" data-tab="want" onclick="BookshelfModule.switchTab('want')">📋 想读清单</button>
+        </div>
+        <div id="bookshelfList"></div>
+
+        <!-- Reading Notes Section -->
+        <div class="mt-lg">
+          <div class="section-title">📝 摘抄 & 感悟</div>
+          <div class="glass-card mb-md">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;gap:8px">
+                <input type="text" class="input" id="noteBookTitle" placeholder="关联书籍 (可选)" style="flex:1">
+                <select class="input" id="noteType" style="width:120px">
+                  <option value="quote">📖 摘抄</option>
+                  <option value="reflection">💭 感悟</option>
+                </select>
+              </div>
+              <textarea class="input" id="noteContent" placeholder="写下摘抄或感悟..." style="min-height:80px;resize:vertical;font-family:inherit"></textarea>
+              <div style="display:flex;justify-content:flex-end">
+                <button class="btn btn-primary btn-sm" onclick="BookshelfModule.saveNote()">💾 保存</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search notes -->
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <input type="text" class="input" id="noteSearch" placeholder="🔍 搜索摘抄内容..." oninput="BookshelfModule.searchNotes()">
+          </div>
+          <div id="readingNotesList"></div>
+        </div>
+      </div>
+
+      <!-- ===== Page: 学习中心 (Learning) ===== -->
+      <div class="page" id="page-learning">
+        <div style="display:flex;gap:20px;min-height:520px">
+          <!-- Left: Subject Tabs -->
+          <div style="width:210px;flex-shrink:0;display:flex;flex-direction:column;gap:8px" id="learningSubjectTabs"></div>
+
+          <!-- Right: Content -->
+          <div style="flex:1;min-width:0" id="learningContentArea">
+            <div style="text-align:center;padding:60px 20px;color:var(--text-tertiary)">
+              <div style="font-size:48px;margin-bottom:16px">📖</div>
+              <div style="font-size:15px;font-weight:500">选择左侧学科开始学习</div>
+              <div style="font-size:12px;margin-top:6px;color:var(--text-placeholder)">教资学习 · Java学习 · 英语学习 · 自定义学科</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Page: 喝水时间 (Water) ===== -->
+      <div class="page" id="page-water">
+        <div class="two-col">
+          <!-- Left: Water Ring -->
+          <div class="glass-card" style="text-align:center">
+            <div class="section-title" style="justify-content:center">💧 今日饮水</div>
+            <div class="ring-chart" style="width:160px;height:160px;margin:0 auto" id="waterRing"></div>
+            <div id="waterCurrent" style="font-size:42px;font-weight:200;color:var(--accent-cyan);line-height:1">0</div>
+            <div style="font-size:13px;color:var(--text-secondary)">/ <span id="waterGoal">2000</span>ml</div>
+            <div style="font-size:12px;margin-top:4px" id="waterRemaining"></div>
+            <div style="margin-top:4px">
+              <span style="font-size:14px;font-weight:600;color:var(--accent-blue)" id="waterPct">0%</span>
+            </div>
+
+            <!-- Quick Add -->
+            <div style="margin-top:18px">
+              <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:8px">快速记录</div>
+              <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap" id="waterQuickBtns"></div>
+              <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+                <input type="number" class="input" id="waterCustomInput" placeholder="自定义ml" style="width:110px;text-align:center" onkeydown="if(event.key==='Enter')WaterModule.addCustomWater()" min="50" step="50">
+                <button class="btn btn-sm btn-primary" onclick="WaterModule.addCustomWater()">记录</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Settings + History -->
+          <div>
+            <div class="glass-card mb-md">
+              <div class="section-title">🎯 每日目标</div>
+              <div style="display:flex;gap:10px;align-items:flex-end">
+                <div style="flex:1">
+                  <input type="number" class="input" id="waterGoalInput" placeholder="2000" value="2000" min="500" step="100">
+                </div>
+                <span style="font-size:13px;color:var(--text-tertiary)">ml</span>
+                <button class="btn btn-sm btn-primary" onclick="WaterModule.updateGoal()">保存目标</button>
+              </div>
+            </div>
+
+            <div class="glass-card">
+              <div class="section-title">📊 近7日饮水趋势</div>
+              <div id="waterHistory"></div>
+            </div>
+
+            <div class="glass-card flat mt-md">
+              <div style="font-size:13px;font-weight:560;margin-bottom:6px">💡 饮水小贴士</div>
+              <p style="font-size:12px;color:var(--text-secondary);line-height:1.6">
+                建议少量多次饮水，每次200-300ml为佳。定时提醒可以帮助养成良好饮水习惯。运动后应及时补充水分。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Page: 今日复盘 (Review) ===== -->
+      <div class="page" id="page-review">
+        <!-- View Tabs -->
+        <div id="reviewViewTabs" style="display:flex;gap:8px;margin-bottom:18px">
+          <button class="btn btn-sm btn-primary" data-view="today" onclick="ReviewModule.switchView('today')">📋 今日复盘</button>
+          <button class="btn btn-sm btn-secondary" data-view="week" onclick="ReviewModule.switchView('week')">📅 本周汇总</button>
+          <button class="btn btn-sm btn-secondary" data-view="month" onclick="ReviewModule.switchView('month')">🗓 本月历史</button>
+        </div>
+
+        <!-- Today's View -->
+        <div id="reviewTodaySection">
+          <!-- Stats Board -->
+          <div id="reviewStatsBoard" class="mb-lg"></div>
+
+          <!-- Weekly Trend -->
+          <div class="glass-card mb-lg" id="reviewWeeklyTrend"></div>
+
+          <!-- 3 Questions -->
+          <div class="glass-card">
+            <div class="section-title">💭 每日自我反馈</div>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div>
+                <label style="font-size:13px;font-weight:560;color:var(--accent-teal);margin-bottom:6px;display:block">① 今天完成了什么？</label>
+                <textarea class="input" id="reviewQ1" placeholder="记录今天完成的事项..." style="min-height:60px;resize:vertical;font-family:inherit"></textarea>
+              </div>
+              <div>
+                <label style="font-size:13px;font-weight:560;color:var(--accent-purple);margin-bottom:6px;display:block">② 今天学到了什么新知识 / 感悟？</label>
+                <textarea class="input" id="reviewQ2" placeholder="记录今天的学习和感悟..." style="min-height:60px;resize:vertical;font-family:inherit"></textarea>
+              </div>
+              <div>
+                <label style="font-size:13px;font-weight:560;color:var(--accent-orange);margin-bottom:6px;display:block">③ 明天需要改进的地方？</label>
+                <textarea class="input" id="reviewQ3" placeholder="思考明天可以做得更好的地方..." style="min-height:60px;resize:vertical;font-family:inherit"></textarea>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:14px">
+              <button class="btn btn-primary" onclick="ReviewModule.saveReview()">💾 保存复盘</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- History View -->
+        <div id="reviewHistorySection" style="display:none">
+          <div id="reviewHistoryContent"></div>
+        </div>
+      </div>
+
+      <!-- ===== Page: 今日运动 (Exercise) ===== -->
+      <div class="page" id="page-exercise">
+        <!-- Motivation -->
+        <div class="glass-card mb-md" style="text-align:center;padding:20px">
+          <div style="font-size:16px;font-weight:540;color:var(--accent-orange);line-height:1.6" id="exerciseMotivation"></div>
+        </div>
+
+        <div class="two-col">
+          <!-- Weight Tracking -->
+          <div>
+            <div class="glass-card mb-md">
+              <div class="section-title">⚖️ 体重记录</div>
+              <div style="display:flex;gap:10px;align-items:flex-end">
+                <div style="flex:1">
+                  <label style="font-size:11px;color:var(--text-tertiary)">今日体重 (kg)</label>
+                  <input type="number" class="input" id="weightInput" placeholder="体重" step="0.1" min="30" max="200" onkeydown="if(event.key==='Enter')ExerciseModule.addWeight()">
+                </div>
+                <button class="btn btn-sm btn-primary" onclick="ExerciseModule.addWeight()">记录</button>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-end;margin-top:10px">
+                <div style="flex:1">
+                  <label style="font-size:11px;color:var(--text-tertiary)">目标体重 (kg)</label>
+                  <input type="number" class="input" id="targetWeightInput" placeholder="目标体重" step="0.1" min="30" max="200">
+                </div>
+                <button class="btn btn-sm btn-secondary" onclick="ExerciseModule.setTargetWeight()">设定目标</button>
+              </div>
+            </div>
+
+            <!-- Weight Chart -->
+            <div class="glass-card">
+              <div id="weightChart"></div>
+            </div>
+          </div>
+
+          <!-- Workout Log -->
+          <div>
+            <div class="glass-card mb-md">
+              <div class="section-title">🏃 运动打卡</div>
+              <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+                <div style="flex:1;min-width:100px">
+                  <label style="font-size:11px;color:var(--text-tertiary)">运动类型</label>
+                  <select class="input" id="workoutType">
+                    <option>跑步</option><option>跳绳</option><option>瑜伽</option>
+                    <option>游泳</option><option>骑行</option><option>力量训练</option>
+                    <option>散步</option><option>篮球</option><option>羽毛球</option><option>其他</option>
+                  </select>
+                </div>
+                <div style="flex:1;min-width:80px">
+                  <label style="font-size:11px;color:var(--text-tertiary)">时长 (分钟)</label>
+                  <input type="number" class="input" id="workoutDuration" placeholder="分钟" min="1" onkeydown="if(event.key==='Enter')ExerciseModule.addWorkout()">
+                </div>
+                <button class="btn btn-sm btn-primary" onclick="ExerciseModule.addWorkout()" style="flex-shrink:0">打卡</button>
+              </div>
+            </div>
+
+            <!-- Today's Records -->
+            <div class="glass-card">
+              <div id="exerciseTodayRecords"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Page: 今日灵感 (Inspiration) ===== -->
+      <div class="page" id="page-inspiration">
+        <div class="two-col">
+          <!-- Left: Input -->
+          <div>
+            <!-- Text Mode -->
+            <div class="glass-card mb-md">
+              <div class="section-title">✏️ 文字灵感</div>
+              <textarea class="input" id="inspirationInput" placeholder="记录一闪而过的想法..." style="min-height:100px;resize:vertical;font-family:inherit"></textarea>
+              <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+                <select class="input" id="inspirationCategory" style="width:110px">
+                  <option value="创意">🎨 创意</option>
+                  <option value="学习">📖 学习</option>
+                  <option value="写作">✍️ 写作</option>
+                  <option value="生活">🌿 生活</option>
+                </select>
+                <button class="btn btn-sm btn-primary" onclick="InspirationModule.saveText()">💾 保存</button>
+                <button class="btn btn-sm btn-secondary" id="voiceBtn" onclick="InspirationModule.startVoice()" title="语音输入">🎤 语音</button>
+              </div>
+            </div>
+
+            <!-- URL Bookmark -->
+            <div class="glass-card mb-md">
+              <div class="section-title">🔗 链接收藏</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <input type="url" class="input" id="inspirationUrl" placeholder="粘贴视频/文章链接...">
+                <input type="text" class="input" id="inspirationUrlNote" placeholder="添加备注说明 (可选)">
+                <div style="display:flex;gap:8px">
+                  <select class="input" id="inspirationUrlCategory" style="width:110px">
+                    <option value="学习">📖 学习</option>
+                    <option value="创意">🎨 创意</option>
+                    <option value="写作">✍️ 写作</option>
+                    <option value="生活">🌿 生活</option>
+                  </select>
+                  <button class="btn btn-sm btn-primary" onclick="InspirationModule.saveLink()">🔗 收藏链接</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: List -->
+          <div>
+            <!-- Filters -->
+            <div id="inspirationFilters" style="display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap">
+              <button class="btn btn-xs btn-primary" data-filter="all" onclick="InspirationModule.setFilter('all')">全部</button>
+              <button class="btn btn-xs btn-secondary" data-filter="today" onclick="InspirationModule.setFilter('today')">今日</button>
+              <button class="btn btn-xs btn-secondary" data-filter="favorite" onclick="InspirationModule.setFilter('favorite')">⭐ 收藏</button>
+              <button class="btn btn-xs btn-secondary" data-filter="text" onclick="InspirationModule.setFilter('text')">文字</button>
+              <button class="btn btn-xs btn-secondary" data-filter="link" onclick="InspirationModule.setFilter('link')">链接</button>
+              <button class="btn btn-xs btn-secondary" data-filter="创意" onclick="InspirationModule.setFilter('创意')">🎨 创意</button>
+              <button class="btn btn-xs btn-secondary" data-filter="学习" onclick="InspirationModule.setFilter('学习')">📖 学习</button>
+              <button class="btn btn-xs btn-secondary" data-filter="写作" onclick="InspirationModule.setFilter('写作')">✍️ 写作</button>
+              <button class="btn btn-xs btn-secondary" data-filter="生活" onclick="InspirationModule.setFilter('生活')">🌿 生活</button>
+            </div>
+            <div id="inspirationList"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content-scroll -->
+  </main>
+
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-bottom-nav" id="mobileBottomNav">
+    <div class="mobile-bottom-nav-inner">
+      <div class="mobile-nav-item active" data-page="dashboard" onclick="App.showPage('dashboard')">
+        <span class="mobile-nav-icon">◉</span>
+        <span>概览</span>
+      </div>
+      <div class="mobile-nav-item" data-page="calendar" onclick="App.showPage('calendar')">
+        <span class="mobile-nav-icon">📅</span>
+        <span>日历</span>
+      </div>
+      <div class="mobile-nav-item" data-page="todos" onclick="App.showPage('todos')">
+        <span class="mobile-nav-icon">☑</span>
+        <span>待办</span>
+      </div>
+      <div class="mobile-nav-item" data-page="learning" onclick="App.showPage('learning')">
+        <span class="mobile-nav-icon">📖</span>
+        <span>学习</span>
+      </div>
+      <div class="mobile-nav-item" data-page="review" onclick="App.showPage('review')">
+        <span class="mobile-nav-icon">📝</span>
+        <span>复盘</span>
+      </div>
+    </div>
+  </nav>
+</div>
+
+<!-- Pomodoro Overlay (hidden) -->
+<div id="pomodoroOverlay" class="pomodoro-overlay" style="display:none">
+  <div class="pomodoro-overlay-content">
+    <div style="font-size:16px;font-weight:500;margin-bottom:12px" id="pomodoroOverlayStatus">🍅 专注中...</div>
+    <div class="timer-big" id="pomodoroOverlayTimer">25:00</div>
+    <div style="margin-top:28px;display:flex;gap:14px;justify-content:center">
+      <button class="btn btn-secondary" onclick="TodoModule.stopPomodoro()" style="color:#fff;border-color:rgba(255,255,255,0.3)">✕ 结束专注</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="js/storage.js"></script>
+<script src="js/modules/dashboard.js"></script>
+<script src="js/modules/hotspots.js"></script>
+<script src="js/modules/calendar.js"></script>
+<script src="js/modules/todos.js"></script>
+<script src="js/modules/bookshelf.js"></script>
+<script src="js/modules/learning.js"></script>
+<script src="js/modules/water.js"></script>
+<script src="js/modules/review.js"></script>
+<script src="js/modules/exercise.js"></script>
+<script src="js/modules/inspiration.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
