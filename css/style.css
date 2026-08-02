@@ -97,6 +97,85 @@ body::before {
   z-index: 0;
 }
 
+/* ============================================================
+   Dark Mode
+   ============================================================ */
+[data-theme="dark"] {
+  --glass-bg: rgba(40, 42, 48, 0.52);
+  --glass-bg-strong: rgba(44, 46, 52, 0.72);
+  --glass-bg-light: rgba(40, 42, 48, 0.34);
+  --glass-bg-hover: rgba(50, 52, 58, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-border-strong: rgba(255, 255, 255, 0.16);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.12);
+
+  --text-primary: #F0F0F4;
+  --text-secondary: #B0B4BC;
+  --text-tertiary: #787C84;
+  --text-placeholder: #5C6068;
+
+  --bg-root: #1C1D21;
+  --bg-sidebar: rgba(28, 29, 33, 0.78);
+  --bg-card: rgba(40, 42, 48, 0.58);
+  --bg-input: rgba(50, 52, 58, 0.65);
+
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.15);
+  --shadow-md: 0 4px 18px rgba(0,0,0,0.20);
+  --shadow-lg: 0 8px 36px rgba(0,0,0,0.25);
+}
+
+/* Dark mode background */
+[data-theme="dark"] body::before {
+  background:
+    radial-gradient(ellipse 70% 55% at 25% 15%, rgba(60, 50, 70, 0.18), transparent 55%),
+    radial-gradient(ellipse 55% 45% at 70% 55%, rgba(40, 50, 65, 0.14), transparent 50%),
+    radial-gradient(ellipse 60% 50% at 45% 75%, rgba(50, 45, 40, 0.12), transparent 55%);
+}
+
+/* Dark mode top bar */
+[data-theme="dark"] .top-bar {
+  background: rgba(28, 29, 33, 0.48);
+  border-bottom-color: rgba(255,255,255,0.08);
+}
+
+/* Dark mode sidebar */
+[data-theme="dark"] .sidebar {
+  background: rgba(28, 29, 33, 0.70);
+  border-right-color: rgba(255,255,255,0.08);
+}
+
+/* Dark mode mobile bottom nav */
+[data-theme="dark"] .mobile-bottom-nav {
+  background: rgba(28, 29, 33, 0.94);
+  border-top-color: rgba(255,255,255,0.08);
+}
+
+/* Dark mode water progress bar bg */
+[data-theme="dark"] .water-progress-bar {
+  background: rgba(255,255,255,0.06);
+}
+
+/* Dark mode quick note */
+[data-theme="dark"] .quick-note-input {
+  background: rgba(255,255,255,0.05);
+}
+
+/* Dark mode modal */
+[data-theme="dark"] .modal {
+  background: rgba(35, 37, 42, 0.94);
+  border-color: rgba(255,255,255,0.12);
+}
+
+/* Dark mode pomodoro overlay */
+[data-theme="dark"] .pomodoro-overlay {
+  background: rgba(0,0,0,0.55);
+}
+
+/* Dark mode toast */
+[data-theme="dark"] .toast {
+  background: rgba(50, 52, 58, 0.92);
+}
+
 /* --- Safe Area Support (PWA standalone) --- */
 :root {
   --safe-top: env(safe-area-inset-top, 0px);

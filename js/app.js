@@ -8,6 +8,7 @@ const App = {
 
   init() {
     Storage.init();
+    this.applyTheme();
     this.bindNavigation();
     this.bindQuickEntry();
     this.registerSW();
@@ -200,6 +201,32 @@ const App = {
         RemindersModule.checkReminders();
       }
     }, 15000);
+  },
+
+  // ===== Theme Toggle =====
+  toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    this.setTheme(next);
+  },
+
+  setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('mt_theme', theme);
+    this.updateThemeIcon(theme);
+    // Update theme-color meta for PWA
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = theme === 'dark' ? '#1C1D21' : '#F0EDF2';
+  },
+
+  applyTheme() {
+    const saved = localStorage.getItem('mt_theme') || 'light';
+    this.setTheme(saved);
+  },
+
+  updateThemeIcon(theme) {
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
   },
 
   // Utility: today string

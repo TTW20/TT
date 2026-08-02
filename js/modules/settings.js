@@ -39,6 +39,22 @@ const SettingsModule = {
     const s = this.getSettings();
 
     container.innerHTML = `
+      <!-- Appearance -->
+      <div class="glass-card mb-md">
+        <div class="section-title">🎨 外观</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:14px;font-weight:500">深色模式</div>
+            <div style="font-size:11px;color:var(--text-tertiary)">切换深色/浅色主题，自动保存偏好</div>
+          </div>
+          <button class="btn btn-sm" id="settingsThemeBtn"
+                  style="min-width:70px"
+                  onclick="App.toggleTheme();setTimeout(()=>SettingsModule.refresh(),100)">
+            ${(document.documentElement.getAttribute('data-theme') === 'dark') ? '☀️ 浅色' : '🌙 深色'}
+          </button>
+        </div>
+      </div>
+
       <!-- Profile -->
       <div class="glass-card mb-md">
         <div class="section-title">👤 个人资料</div>
