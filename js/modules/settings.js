@@ -479,34 +479,38 @@ const SettingsModule = {
   },
 
   // ===== Auto Sync =====
-  toggleAutoSync() {
+  async toggleAutoSync() {
     const s = this.getSettings();
     if (!s.gistToken) {
-      App.toast('⚠️ 请先在下方手动同步区域填写 GitHub Token 并上传一次');
+      App.toast('⚠️ 请先在下方手动同步区域填写 GitHub Token');
       return;
     }
-    if (!s.gistId) {
-      // No Gist yet - do initial upload first
-      App.toast('⏳ 首次使用，正在创建云端存档...');
-      this.autoPush().then(() => {
-        if (this.getSettings().gistId) {
-          this.autoSyncEnabled = true;
-          this.saveSettings({ autoSync: true });
-          App.toast('🔄 自动同步已开启');
-          this.refresh();
-        }
-      });
-      return;
-    }
-    this.autoSyncEnabled = !this.autoSyncEnabled;
-    this.saveSettings({ autoSync: this.autoSyncEnabled });
+    // If already ON, just turn off
     if (this.autoSyncEnabled) {
-      App.toast('🔄 自动同步已开启');
-      this.autoPull();
-    } else {
+      this.autoSyncEnabled = false;
+      this.saveSettings({ autoSync: false });
       App.toast('⏸ 自动同步已关闭');
+      this.refresh();
+      return;
     }
+    // Turning ON
+    if (!s.gistId) {
+      App.toast('⏳ 正在创建云端存档...');
+      this.updateSyncStatus('⏳ 创建存档中...');
+      await this.autoPush();
+      const updated = this.getSettings();
+      if (!updated.gistId) {
+        App.toast('❌ 创建失败，请检查网络或Token');
+        this.updateSyncStatus('⚠ 创建存档失败');
+        return;
+      }
+    }
+    this.autoSyncEnabled = true;
+    this.saveSettings({ autoSync: true });
+    this.updateSyncStatus('✅ 自动同步已开启');
+    App.toast('🔄 自动同步已开启');
     this.refresh();
+    this.autoPull();
   },
 
   updateSyncStatus(msg) {
@@ -558,7 +562,7 @@ const SettingsModule = {
   async autoPush() {
     if (this.syncInProgress) { this.schedulePush(); return; }
     const s = this.getSettings();
-    if (!s.gistToken) { this.updateSyncStatus('⚠ 未配置Token'); return; }
+    if (!s.gistToken) { this.updateSyncStatus('⚠ 未配置Token'); throw new Error('No token'); }
 
     this.syncInProgress = true;
     this.updateSyncStatus('⏳ 同步中...');
@@ -587,7 +591,7 @@ const SettingsModule = {
       if (resp.status === 401 || resp.status === 403) {
         this.updateSyncStatus('⚠ Token无效，请重新设置');
         this.syncInProgress = false;
-        return;
+        throw new Error('Token invalid');
       }
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const result = await resp.json();
@@ -597,17 +601,23 @@ const SettingsModule = {
         lastSync: new Date().toISOString(),
       });
       this.updateSyncStatus('✅ 已同步 ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}));
+      this.syncInProgress = false;
+      return true;
     } catch (e) {
       this.updateSyncStatus('⚠ 网络不通，稍后重试');
-      setTimeout(() => { if (this.autoSyncEnabled) this.autoPush(); }, 30000);
+      this.syncInProgress = false;
+      // Only schedule retry if auto-sync is enabled (background mode)
+      if (this.autoSyncEnabled) {
+        setTimeout(() => { if (this.autoSyncEnabled) this.autoPush(); }, 30000);
+      }
+      throw e; // Re-throw so callers can detect failure
     }
-    this.syncInProgress = false;
   },
 
   schedulePush() {
     if (this._pushTimer) clearTimeout(this._pushTimer);
     this._pushTimer = setTimeout(() => {
-      if (this.autoSyncEnabled) this.autoPush();
+      if (this.autoSyncEnabled) this.autoPush().catch(() => {});
     }, this._pushDebounce);
   },
 
