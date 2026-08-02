@@ -482,7 +482,20 @@ const SettingsModule = {
   toggleAutoSync() {
     const s = this.getSettings();
     if (!s.gistToken) {
-      App.toast('⚠️ 请先在下方云同步区域填写 GitHub Token');
+      App.toast('⚠️ 请先在下方手动同步区域填写 GitHub Token 并上传一次');
+      return;
+    }
+    if (!s.gistId) {
+      // No Gist yet - do initial upload first
+      App.toast('⏳ 首次使用，正在创建云端存档...');
+      this.autoPush().then(() => {
+        if (this.getSettings().gistId) {
+          this.autoSyncEnabled = true;
+          this.saveSettings({ autoSync: true });
+          App.toast('🔄 自动同步已开启');
+          this.refresh();
+        }
+      });
       return;
     }
     this.autoSyncEnabled = !this.autoSyncEnabled;
@@ -504,10 +517,11 @@ const SettingsModule = {
   async autoPull() {
     if (this.syncInProgress) return;
     const s = this.getSettings();
-    if (!s.gistToken || !s.gistId) return;
+    if (!s.gistToken) { this.updateSyncStatus('⚠ 未配置Token'); return; }
+    if (!s.gistId) { this.updateSyncStatus('⚠ 未创建云端存档，修改数据后自动创建'); return; }
 
     this.syncInProgress = true;
-    this.updateSyncStatus('⬇ 正在从云端下载...');
+    this.updateSyncStatus('⬇ 下载中...');
     try {
       const resp = await fetch(`https://api.github.com/gists/${s.gistId}`, {
         headers: {
@@ -515,26 +529,28 @@ const SettingsModule = {
           'Accept': 'application/vnd.github.v3+json',
         },
       });
+      if (resp.status === 401 || resp.status === 403) {
+        this.updateSyncStatus('⚠ Token无效，请重新设置');
+        this.syncInProgress = false;
+        return;
+      }
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const gist = await resp.json();
       const file = gist.files && gist.files['mengtian-data.json'];
       if (file && file.content) {
-        // Compare timestamps - only overwrite if remote is newer
         const remoteUpdated = new Date(gist.updated_at);
         const localSync = s.lastSync ? new Date(s.lastSync) : new Date(0);
         if (remoteUpdated > localSync) {
           Storage.importAll(file.content);
           this.saveSettings({ lastSync: new Date().toISOString() });
-          this.updateSyncStatus('✅ 已从云端同步 ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}));
-          // Refresh current page if any module is visible
+          this.updateSyncStatus('✅ 已同步 ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}));
           if (App.currentPage) App.refreshPage(App.currentPage);
         } else {
-          this.updateSyncStatus('✅ 已是最新 ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}));
+          this.updateSyncStatus('✅ 已是最新');
         }
       }
     } catch (e) {
-      this.updateSyncStatus('⚠ 同步失败，稍后重试');
-      console.log('Auto-pull failed:', e.message);
+      this.updateSyncStatus('⚠ 网络不通，稍后重试');
     }
     this.syncInProgress = false;
   },
@@ -542,7 +558,7 @@ const SettingsModule = {
   async autoPush() {
     if (this.syncInProgress) { this.schedulePush(); return; }
     const s = this.getSettings();
-    if (!s.gistToken) return;
+    if (!s.gistToken) { this.updateSyncStatus('⚠ 未配置Token'); return; }
 
     this.syncInProgress = true;
     this.updateSyncStatus('⏳ 同步中...');
@@ -568,6 +584,11 @@ const SettingsModule = {
         body: JSON.stringify(body),
       });
 
+      if (resp.status === 401 || resp.status === 403) {
+        this.updateSyncStatus('⚠ Token无效，请重新设置');
+        this.syncInProgress = false;
+        return;
+      }
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       const result = await resp.json();
 
@@ -577,9 +598,7 @@ const SettingsModule = {
       });
       this.updateSyncStatus('✅ 已同步 ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}));
     } catch (e) {
-      this.updateSyncStatus('⚠ 同步失败，稍后重试');
-      console.log('Auto-push failed:', e.message);
-      // Retry in 30 seconds
+      this.updateSyncStatus('⚠ 网络不通，稍后重试');
       setTimeout(() => { if (this.autoSyncEnabled) this.autoPush(); }, 30000);
     }
     this.syncInProgress = false;
@@ -595,7 +614,7 @@ const SettingsModule = {
   // Called by storage.js after any data change
   onDataChanged() {
     if (this.autoSyncEnabled) {
-      this.updateSyncStatus('💾 数据已更改，即将同步...');
+      this.updateSyncStatus('💾 已更改，即将同步...');
       this.schedulePush();
     }
   },
