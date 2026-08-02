@@ -907,12 +907,12 @@ select.input {
 .mobile-bottom-nav-inner {
   display: flex; justify-content: space-around; align-items: center;
   max-width: 500px; margin: 0 auto;
-  padding-top: 2px;
+  padding-top: 6px;
 }
 
 .mobile-nav-item {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: 4px 10px 5px; border-radius: var(--radius-sm);
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 4px 10px 4px; border-radius: var(--radius-sm);
   cursor: pointer; transition: all var(--transition-fast);
   color: var(--text-tertiary); font-size: 10px;
   min-width: 52px; text-decoration: none;

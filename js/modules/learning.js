@@ -25,7 +25,8 @@ const LearningModule = {
   refresh() {
     this.renderSubjects();
     this.renderContent();
-    this.updateStudyTimerDisplay();
+    // Refresh timer UI to show correct state
+    setTimeout(() => this.refreshTimerUI(), 50);
   },
 
   // --- Data helpers ---
@@ -121,17 +122,16 @@ const LearningModule = {
   },
 
   selectSubject(id) {
-    this.activeSubject = id;
-    // 安全停止计时器（元素可能尚未渲染）
-    if (this.studyTimerRunning) {
-      this.studyTimerRunning = false;
-      clearInterval(this.studyTimerInterval);
+    // Save current session before switching
+    if (this.elapsedSeconds > 0 || this.studyTimerRunning) {
+      this.stopTimer(); // Records current time, resets for new subject
     }
-    this.elapsedSeconds = 0;
-    this.studyTimerSeconds = 0;
+    this.activeSubject = id;
     this.refresh();
     const contentArea = document.getElementById('learningContentArea');
     if (contentArea) contentArea.scrollTop = 0;
+    // Refresh timer UI for new subject
+    setTimeout(() => this.refreshTimerUI(), 100);
   },
 
   showAddSubject() {
@@ -235,8 +235,8 @@ const LearningModule = {
 
       <!-- Timer Display -->
       <div class="glass-card mb-md" id="learningTimerCard" style="text-align:center;padding:14px;display:none">
-        <div style="display:flex;align-items:center;justify-content:center;gap:14px">
-          <span style="font-size:11px;color:var(--text-tertiary)">⏱ 计时中</span>
+        <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:4px" id="learningTimerStatus"></div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap">
           <span style="font-size:32px;font-weight:200;font-family:'SF Mono','Menlo',monospace;letter-spacing:2px" id="learningTimerDisplay">00:00</span>
           <span style="font-size:11px;color:var(--accent-green)" id="learningElapsed"></span>
           <button class="btn btn-xs btn-danger" onclick="LearningModule.stopTimer()">⏹ 停止</button>
@@ -461,35 +461,25 @@ const LearningModule = {
     App.toast(`🎯 每日目标已更新为 ${goal} 分钟`);
   },
 
-  // --- Study Timer ---
+  // --- Study Timer (runs globally, survives page switches) ---
   startTimer() {
     if (this.studyTimerRunning) return;
     this.studyTimerRunning = true;
-    this.elapsedSeconds = 0;
-    this.studyTimerSeconds = 0;
-
-    const timerCard = document.getElementById('learningTimerCard');
-    const timerBtn = document.getElementById('learningTimerBtn');
-    if (timerCard) timerCard.style.display = '';
-    if (timerBtn) {
-      timerBtn.textContent = '● 计时中...';
-      timerBtn.className = 'btn btn-sm btn-danger';
-      timerBtn.onclick = () => LearningModule.stopTimer();
-    }
+    // Don't reset elapsedSeconds - keep previous accumulation
 
     this.studyTimerInterval = setInterval(() => {
       this.studyTimerSeconds++;
       this.elapsedSeconds++;
       this.updateStudyTimerDisplay();
     }, 1000);
+
+    this.refreshTimerUI();
   },
 
   pauseTimer() {
-    const pauseBtn = document.getElementById('learningPauseBtn');
     if (!this.studyTimerRunning) {
       // Resume
       this.studyTimerRunning = true;
-      if (pauseBtn) pauseBtn.textContent = '⏸ 暂停';
       this.studyTimerInterval = setInterval(() => {
         this.studyTimerSeconds++;
         this.elapsedSeconds++;
@@ -499,48 +489,87 @@ const LearningModule = {
       // Pause
       this.studyTimerRunning = false;
       clearInterval(this.studyTimerInterval);
-      if (pauseBtn) pauseBtn.textContent = '▶ 继续';
     }
+    this.refreshTimerUI();
   },
 
   stopTimer() {
     this.studyTimerRunning = false;
     clearInterval(this.studyTimerInterval);
 
-    const minutes = Math.round((this.elapsedSeconds || 0) / 60);
-    if (minutes > 0) {
-      const data = this.getData();
-      const s = data.find(s => s.id === this.activeSubject);
-      if (s) {
-        s.totalMinutes = (s.totalMinutes || 0) + minutes;
-        s.todayMinutes = (s.todayMinutes || 0) + minutes;
-        if (!s.completedTopics) s.completedTopics = [];
-        s.completedTopics.push({
-          id: Date.now().toString(36),
-          text: `⏱ 自由学习`,
-          minutes,
-          date: App.today(),
-          timestamp: new Date().toISOString(),
-        });
-        this.saveData(data);
+    const minutes = Math.max(1, Math.round((this.elapsedSeconds || 0) / 60));
+    // Always record, no minimum requirement
+    const data = this.getData();
+    const s = data.find(s => s.id === this.activeSubject);
+    if (s) {
+      s.totalMinutes = (s.totalMinutes || 0) + minutes;
+      s.todayMinutes = (s.todayMinutes || 0) + minutes;
+      if (!s.completedTopics) s.completedTopics = [];
+      s.completedTopics.push({
+        id: Date.now().toString(36),
+        text: `⏱ 自由学习`,
+        minutes,
+        date: App.today(),
+        timestamp: new Date().toISOString(),
+      });
+      this.saveData(data);
+
+      // Check if goal reached
+      if (s.todayMinutes >= s.goalMin) {
+        App.toast(`🎉 今日目标达成！${s.todayMinutes}/${s.goalMin} 分钟`);
+      } else {
+        App.toast(`⏱ 已记录 ${minutes} 分钟 (今日累计 ${s.todayMinutes}/${s.goalMin})`);
       }
-      App.toast(`⏱ 学习结束，本次 ${minutes} 分钟`);
     }
 
     this.elapsedSeconds = 0;
     this.studyTimerSeconds = 0;
+    this.refreshTimerUI();
+    this.refresh();
+  },
 
-    // 安全更新 DOM 元素（可能尚未渲染）
+  // Save timer session when leaving learning page (called from app.js)
+  onPageLeave() {
+    if (this.studyTimerRunning) {
+      // Pause but don't save - keep timer state intact
+      // Timer keeps running via interval, just update UI when returning
+    }
+  },
+
+  refreshTimerUI() {
     const timerCard = document.getElementById('learningTimerCard');
     const timerBtn = document.getElementById('learningTimerBtn');
-    if (timerCard) timerCard.style.display = 'none';
-    if (timerBtn) {
-      timerBtn.textContent = '▶ 开始计时';
-      timerBtn.className = 'btn btn-sm btn-primary';
+    const pauseBtn = document.getElementById('learningPauseBtn');
+    const statusEl = document.getElementById('learningTimerStatus');
+
+    if (!timerBtn) return; // Not on learning page
+
+    if (this.studyTimerRunning) {
+      if (timerCard) timerCard.style.display = '';
+      timerBtn.textContent = '⏹ 停止';
+      timerBtn.className = 'btn btn-sm btn-danger';
+      timerBtn.onclick = () => LearningModule.stopTimer();
+      if (pauseBtn) { pauseBtn.textContent = '⏸ 暂停'; pauseBtn.style.display = ''; }
+      if (statusEl) statusEl.textContent = '⏱ 计时中';
+    } else if (this.elapsedSeconds > 0) {
+      // Paused with accumulated time
+      if (timerCard) timerCard.style.display = '';
+      const eMin = Math.round(this.elapsedSeconds / 60);
+      timerBtn.textContent = '⏹ 停止并记录';
+      timerBtn.className = 'btn btn-sm btn-danger';
+      timerBtn.onclick = () => LearningModule.stopTimer();
+      if (pauseBtn) { pauseBtn.textContent = '▶ 继续'; pauseBtn.style.display = ''; }
+      if (statusEl) statusEl.textContent = `⏸ 已暂停 · 累计 ${eMin} 分钟`;
+    } else {
+      // Stopped, nothing accumulated
+      if (timerCard) timerCard.style.display = 'none';
+      timerBtn.textContent = '▶ 开始计时学习';
+      timerBtn.className = 'btn btn-primary btn-sm w-full';
       timerBtn.onclick = () => LearningModule.startTimer();
+      if (pauseBtn) pauseBtn.style.display = 'none';
+      if (statusEl) statusEl.textContent = '';
     }
     this.updateStudyTimerDisplay();
-    this.refresh();
   },
 
   updateStudyTimerDisplay() {
@@ -551,9 +580,9 @@ const LearningModule = {
     const display = document.getElementById('learningTimerDisplay');
     const elapsed = document.getElementById('learningElapsed');
     if (display) display.textContent = timeStr;
-    if (elapsed && this.elapsedSeconds > 0) {
+    if (elapsed) {
       const eMin = Math.round(this.elapsedSeconds / 60);
-      elapsed.textContent = `累计 ${eMin}min`;
+      elapsed.textContent = eMin > 0 ? `累计 ${eMin}min` : '';
     }
   },
 };
