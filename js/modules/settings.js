@@ -211,15 +211,15 @@ const SettingsModule = {
         </div>
       </div>
 
-      <!-- Gitee Cloud Sync (primary - works in China) -->
+      <!-- GitHub Gist Cloud Sync -->
       <div class="glass-card mb-md">
-        <div class="section-title">☁ 云同步 · 码云 Gitee</div>
+        <div class="section-title">☁ 云同步 · GitHub Gist</div>
         <div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;line-height:1.6">
-          国内可用，自动同步需要。<br>
-          <a href="https://gitee.com/profile/personal_access_tokens" target="_blank" style="color:var(--accent-blue)">→ 点此创建 Gitee Token</a>，勾选 <b>gists</b> 权限，粘贴到下方。
+          自动同步需要 GitHub Token。<br>
+          <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--accent-blue)">→ 点此创建 Token</a>，勾选 <b>gist</b> 权限，粘贴到下方。
         </div>
         <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px">
-          <input type="password" class="input" id="settingGistToken" placeholder="Gitee Token" style="flex:2;min-width:160px;font-family:monospace;font-size:12px"
+          <input type="password" class="input" id="settingGistToken" placeholder="ghp_xxxxxxxxxxxx" style="flex:2;min-width:160px;font-family:monospace;font-size:12px"
                  value="${s.gistToken || ''}">
           <button class="btn btn-sm btn-secondary" onclick="SettingsModule.saveToken()" style="flex-shrink:0">💾 保存</button>
         </div>
@@ -523,7 +523,7 @@ const SettingsModule = {
     this.syncInProgress = true;
     this.updateSyncStatus('⬇ 下载中...');
     try {
-      const resp = await fetch(`https://gitee.com/api/v5/gists/${s.gistId}`, {
+      const resp = await fetch(`https://api.github.com/gists/${s.gistId}`, {
         headers: {
           'Authorization': `Bearer ${s.gistToken}`,
           'Content-Type': 'application/json',
@@ -570,7 +570,7 @@ const SettingsModule = {
         files: { 'mengtian-data.json': { content: dataJson } },
       };
 
-      let url = 'https://gitee.com/api/v5/gists';
+      let url = 'https://api.github.com/gists';
       let method = 'POST';
       if (s.gistId) { url += '/' + s.gistId; method = 'PATCH'; }
 
@@ -656,10 +656,10 @@ const SettingsModule = {
         },
       };
 
-      let url = 'https://gitee.com/api/v5/gists';
+      let url = 'https://api.github.com/gists';
       let method = 'POST';
       if (gistId) {
-        url = `https://gitee.com/api/v5/gists/${gistId}`;
+        url = `https://api.github.com/gists/${gistId}`;
         method = 'PATCH';
       }
 
@@ -667,7 +667,7 @@ const SettingsModule = {
         method,
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
+          'Accept': 'application/vnd.github.v3+json',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),
@@ -709,10 +709,10 @@ const SettingsModule = {
     if (btn) { btn.disabled = true; btn.textContent = '⏳ 下载中...'; }
 
     try {
-      const resp = await fetch(`https://gitee.com/api/v5/gists/${gistId}`, {
+      const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
+          'Accept': 'application/vnd.github.v3+json',
         },
       });
 
