@@ -83,6 +83,17 @@ const Storage = {
 
   set(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
+    // Trigger auto-sync
+    this._notifyChange();
+  },
+
+  _notifyChange() {
+    if (this._notifyTimer) clearTimeout(this._notifyTimer);
+    this._notifyTimer = setTimeout(() => {
+      if (typeof SettingsModule !== 'undefined' && SettingsModule.onDataChanged) {
+        SettingsModule.onDataChanged();
+      }
+    }, 500);
   },
 
   // --- Todos ---

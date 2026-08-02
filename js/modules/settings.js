@@ -3,8 +3,19 @@
  * Goals, reminders, theme, profile customization
  */
 const SettingsModule = {
+  _pushTimer: null,
+  _pushDebounce: 3000, // 3 seconds after last change
+  autoSyncEnabled: false,
+  syncInProgress: false,
+
   init() {
+    const s = this.getSettings();
+    this.autoSyncEnabled = s.autoSync === true;
     this.refresh();
+    // Auto-pull on start if enabled
+    if (this.autoSyncEnabled && s.gistToken) {
+      setTimeout(() => this.autoPull(), 2000);
+    }
   },
 
   refresh() {
@@ -130,9 +141,31 @@ const SettingsModule = {
           <button class="btn btn-danger btn-sm" onclick="SettingsModule.resetAll()">🗑 重置数据</button>
         </div>
 
+      <!-- Auto Sync Toggle -->
+      <div class="glass-card mb-md" style="border:2px solid ${this.autoSyncEnabled ? 'var(--accent-green)' : 'var(--glass-border)'};border-radius:var(--radius-lg)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:15px;font-weight:620">🔄 自动同步</div>
+            <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">
+              ${this.autoSyncEnabled ? '✅ 已开启 · 数据自动云端同步' : '开启后改数据自动上传，打开自动下载'}
+            </div>
+          </div>
+          <button class="btn btn-sm ${this.autoSyncEnabled ? 'btn-primary' : 'btn-secondary'}"
+                  onclick="SettingsModule.toggleAutoSync()" style="min-width:70px;flex-shrink:0">
+            ${this.autoSyncEnabled ? 'ON' : 'OFF'}
+          </button>
+        </div>
+        ${this.autoSyncEnabled ? `
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--glass-border);font-size:11px;color:var(--text-tertiary)">
+            <span id="autoSyncStatus">🔄 准备同步...</span>
+            ${s.lastSync ? '<span style="margin-left:8px">上次: ' + new Date(s.lastSync).toLocaleString('zh-CN').slice(5) + '</span>' : ''}
+          </div>
+        ` : ''}
+      </div>
+
       <!-- Device Sync (primary) -->
       <div class="glass-card mb-md" style="border:2px solid var(--accent-blue);border-radius:var(--radius-lg)">
-        <div class="section-title">📲 设备间同步</div>
+        <div class="section-title">📲 手动同步</div>
 
         <!-- One-tap share -->
         <div style="text-align:center;margin-bottom:14px">
@@ -426,6 +459,128 @@ const SettingsModule = {
       } else {
         App.toast('❌ 数据格式无效');
       }
+    }
+  },
+
+  // ===== Auto Sync =====
+  toggleAutoSync() {
+    const s = this.getSettings();
+    if (!s.gistToken) {
+      App.toast('⚠️ 请先在下方云同步区域填写 GitHub Token');
+      return;
+    }
+    this.autoSyncEnabled = !this.autoSyncEnabled;
+    this.saveSettings({ autoSync: this.autoSyncEnabled });
+    if (this.autoSyncEnabled) {
+      App.toast('🔄 自动同步已开启');
+      this.autoPull();
+    } else {
+      App.toast('⏸ 自动同步已关闭');
+    }
+    this.refresh();
+  },
+
+  updateSyncStatus(msg) {
+    const el = document.getElementById('autoSyncStatus');
+    if (el) el.textContent = msg;
+  },
+
+  async autoPull() {
+    if (this.syncInProgress) return;
+    const s = this.getSettings();
+    if (!s.gistToken || !s.gistId) return;
+
+    this.syncInProgress = true;
+    this.updateSyncStatus('⬇ 正在从云端下载...');
+    try {
+      const resp = await fetch(`https://api.github.com/gists/${s.gistId}`, {
+        headers: {
+          'Authorization': `Bearer ${s.gistToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const gist = await resp.json();
+      const file = gist.files && gist.files['mengtian-data.json'];
+      if (file && file.content) {
+        // Compare timestamps - only overwrite if remote is newer
+        const remoteUpdated = new Date(gist.updated_at);
+        const localSync = s.lastSync ? new Date(s.lastSync) : new Date(0);
+        if (remoteUpdated > localSync) {
+          Storage.importAll(file.content);
+          this.saveSettings({ lastSync: new Date().toISOString() });
+          this.updateSyncStatus('✅ 已从云端同步 ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}));
+          // Refresh current page if any module is visible
+          if (App.currentPage) App.refreshPage(App.currentPage);
+        } else {
+          this.updateSyncStatus('✅ 已是最新 ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}));
+        }
+      }
+    } catch (e) {
+      this.updateSyncStatus('⚠ 同步失败，稍后重试');
+      console.log('Auto-pull failed:', e.message);
+    }
+    this.syncInProgress = false;
+  },
+
+  async autoPush() {
+    if (this.syncInProgress) { this.schedulePush(); return; }
+    const s = this.getSettings();
+    if (!s.gistToken) return;
+
+    this.syncInProgress = true;
+    this.updateSyncStatus('⏳ 同步中...');
+    try {
+      const dataJson = Storage.exportAll();
+      const body = {
+        description: '梦天工作台 · 自动同步',
+        public: false,
+        files: { 'mengtian-data.json': { content: dataJson } },
+      };
+
+      let url = 'https://api.github.com/gists';
+      let method = 'POST';
+      if (s.gistId) { url += '/' + s.gistId; method = 'PATCH'; }
+
+      const resp = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${s.gistToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const result = await resp.json();
+
+      this.saveSettings({
+        gistId: result.id,
+        lastSync: new Date().toISOString(),
+      });
+      this.updateSyncStatus('✅ 已同步 ' + new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}));
+    } catch (e) {
+      this.updateSyncStatus('⚠ 同步失败，稍后重试');
+      console.log('Auto-push failed:', e.message);
+      // Retry in 30 seconds
+      setTimeout(() => { if (this.autoSyncEnabled) this.autoPush(); }, 30000);
+    }
+    this.syncInProgress = false;
+  },
+
+  schedulePush() {
+    if (this._pushTimer) clearTimeout(this._pushTimer);
+    this._pushTimer = setTimeout(() => {
+      if (this.autoSyncEnabled) this.autoPush();
+    }, this._pushDebounce);
+  },
+
+  // Called by storage.js after any data change
+  onDataChanged() {
+    if (this.autoSyncEnabled) {
+      this.updateSyncStatus('💾 数据已更改，即将同步...');
+      this.schedulePush();
     }
   },
 
