@@ -176,6 +176,74 @@ body::before {
   background: rgba(50, 52, 58, 0.92);
 }
 
+/* Dark mode inputs - prevent white flash */
+[data-theme="dark"] .input,
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="time"],
+[data-theme="dark"] input[type="url"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="color"],
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background: rgba(50, 52, 58, 0.75) !important;
+  color: var(--text-primary) !important;
+  border-color: rgba(255,255,255,0.10) !important;
+}
+
+[data-theme="dark"] .input:focus,
+[data-theme="dark"] textarea:focus,
+[data-theme="dark"] select:focus {
+  background: rgba(55, 57, 64, 0.85) !important;
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 0 4px rgba(126, 176, 221, 0.08) !important;
+}
+
+/* Dark mode select dropdown arrows */
+[data-theme="dark"] select.input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23787C84' stroke-width='2'%3E%3Cpath d='m2 4 4 4 4-4'/%3E%3C/svg%3E");
+}
+
+/* Dark mode - prevent autofill white */
+[data-theme="dark"] input:-webkit-autofill,
+[data-theme="dark"] input:-webkit-autofill:hover,
+[data-theme="dark"] input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 30px rgba(50, 52, 58, 0.95) inset !important;
+  -webkit-text-fill-color: var(--text-primary) !important;
+  caret-color: var(--text-primary);
+}
+
+/* Dark mode date/time picker indicator */
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="dark"] input[type="time"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+}
+
+/* Dark mode placeholder */
+[data-theme="dark"] ::placeholder {
+  color: var(--text-placeholder) !important;
+  opacity: 0.6;
+}
+
+/* Dark mode quick note */
+[data-theme="dark"] .quick-note-input {
+  background: rgba(50, 52, 58, 0.65) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Dark mode ring/bar backgrounds */
+[data-theme="dark"] .water-progress-bar,
+[data-theme="dark"] [style*="background:rgba(0,0,0,0.06)"] {
+  background: rgba(255,255,255,0.06) !important;
+}
+
+/* Dark mode tag text visibility */
+[data-theme="dark"] .tag-red { background: rgba(237, 142, 134, 0.20); }
+[data-theme="dark"] .tag-orange { background: rgba(238, 187, 122, 0.20); }
+[data-theme="dark"] .tag-blue { background: rgba(126, 176, 221, 0.20); }
+[data-theme="dark"] .tag-gray { background: rgba(176, 182, 190, 0.18); }
+
 /* --- Safe Area Support (PWA standalone) --- */
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
