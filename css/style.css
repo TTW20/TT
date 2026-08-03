@@ -109,10 +109,10 @@ body::before {
   --glass-border-strong: rgba(255, 255, 255, 0.16);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.12);
 
-  --text-primary: #F0F0F4;
-  --text-secondary: #B0B4BC;
-  --text-tertiary: #787C84;
-  --text-placeholder: #5C6068;
+  --text-primary: #F2F2F6;
+  --text-secondary: #C0C4CC;
+  --text-tertiary: #969AA4;
+  --text-placeholder: #6C7078;
 
   --bg-root: #1C1D21;
   --bg-sidebar: rgba(28, 29, 33, 0.78);
@@ -243,6 +243,47 @@ body::before {
 [data-theme="dark"] .tag-orange { background: rgba(238, 187, 122, 0.20); }
 [data-theme="dark"] .tag-blue { background: rgba(126, 176, 221, 0.20); }
 [data-theme="dark"] .tag-gray { background: rgba(176, 182, 190, 0.18); }
+[data-theme="dark"] .tag-green { background: rgba(140, 192, 140, 0.18); }
+[data-theme="dark"] .tag-purple { background: rgba(176, 164, 212, 0.18); }
+
+/* Dark mode: all glass-card flat should have dark bg */
+[data-theme="dark"] .glass-card.flat {
+  background: rgba(40, 42, 48, 0.45) !important;
+}
+
+/* Dark mode: any inline rgba(0,0,0,x) background → rgba(255,255,255,x) */
+[data-theme="dark"] .todo-item,
+[data-theme="dark"] .reminder-card,
+[data-theme="dark"] .book-card,
+[data-theme="dark"] .inspiration-card,
+[data-theme="dark"] .hot-topic-item {
+  background: rgba(40, 42, 48, 0.55) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+
+/* Dark mode: ring chart circle backgrounds */
+[data-theme="dark"] circle[stroke="rgba(0,0,0,0.06)"],
+[data-theme="dark"] circle[stroke="rgba(0,0,0,0.05)"] {
+  stroke: rgba(255,255,255,0.06) !important;
+}
+
+/* Dark mode: section titles more visible */
+[data-theme="dark"] .section-title {
+  color: var(--text-primary);
+}
+
+/* Dark mode: calendar days hover */
+[data-theme="dark"] .calendar-day:hover {
+  background: rgba(255,255,255,0.06);
+}
+[data-theme="dark"] .calendar-day.other-month {
+  color: var(--text-placeholder);
+}
+
+/* Dark mode: time-slot-row */
+[data-theme="dark"] .time-slot-input {
+  color-scheme: dark;
+}
 
 /* --- Safe Area Support (PWA standalone) --- */
 :root {
